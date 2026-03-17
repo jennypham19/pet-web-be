@@ -94,7 +94,7 @@ module.exports = (sequelize, DataTypes) => {
         // Cột is_default_type: tài khoản mặc định
         is_default_type: {
             type: DataTypes.INTEGER,
-            defaultValue: 0 // 0: mặc định, 1: đã bị reset mật khẩu
+            defaultValue: 1 // 1: mặc định, 1: đã bị reset mật khẩu
         },
         // Cột is_reset: reset mật khẩu
         is_reset: {

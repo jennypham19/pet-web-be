@@ -49,7 +49,7 @@ module.exports = (sequelize, DataTypes) => {
         // Cột position: vị trí
         position: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
         // Cột title: chức danh
         title: {

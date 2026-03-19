@@ -66,7 +66,15 @@ module.exports = (sequelize, DataTypes) => {
         breeding_staus:{
             type: DataTypes.TEXT,
             allowNull: false
-        } 
+        },
+        url_avatar: {
+            type: DataTypes.STRING,
+            allowNull: true
+        },
+        name_avatar: {
+            type: DataTypes.STRING,
+            allowNull: true
+        }
     }, {
         sequelize,
         modelName: 'Pet'

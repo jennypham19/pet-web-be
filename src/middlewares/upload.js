@@ -27,7 +27,7 @@ const signCloudinaryUrl = (publicId) => {
 const storage = new CloudinaryStorage({
   cloudinary,
   params: (req, file) => {
-    let folder = "wooden";
+    let folder = "pet";
     if (req.body.type) {
       folder = `${folder}/${req.body.type}`;
     }

@@ -4,6 +4,8 @@ const express = require('express');
 // Import các file route riêng lẻ
 const authRoute = require('../routes/auth.route');
 const userRoute = require('../routes/user.route');
+const uploadRoute = require('../routes/upload.route');
+const petRoute = require('../routes/pet.route');
 
 const router = express.Router();
 
@@ -16,6 +18,14 @@ const defaultRoutes = [
   {
     path: '/users',
     route: userRoute
+  },
+  {
+    path: '/image',
+    route: uploadRoute
+  },
+  {
+    path: '/pets',
+    route: petRoute
   }
 ]
 

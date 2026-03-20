@@ -2,6 +2,7 @@
 const { Pet } = require('../models');
 const { StatusCodes } = require('http-status-codes');
 const ApiError = require('../utils/ApiError');
+const { Op } = require('sequelize');
 
 // Tạo hồ sơ thú cưng
 const createPet = async(petBody) => {
@@ -22,9 +23,7 @@ const queryListPets= async(queryOptions) => {
         const offset = (page - 1) * limit;
         const whereClause = {};
         if(searchTerm){
-            whereClause[Op.or] = [
-                { name: { [Op.iLike]: `%${searchTerm}%` }},
-            ]
+            whereClause.name =  { [Op.iLike]: `%${searchTerm}%` }
         }
         const { count, rows: petDB } = await Pet.findAndCountAll({
             where: whereClause,

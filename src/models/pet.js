@@ -25,6 +25,10 @@ module.exports = (sequelize, DataTypes) => {
             Pet.hasOne(models.SpecialNutritionalPlan, {
                 foreignKey: 'pet_id',
                 as: 'petSpecialNutritionalPlan'
+            }),
+            Pet.hasMany(models.TaskPet, {
+                foreignKey: 'pet_id',
+                as: 'pets'
             })
         }
     };

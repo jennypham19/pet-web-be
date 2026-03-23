@@ -6,6 +6,7 @@ const authRoute = require('../routes/auth.route');
 const userRoute = require('../routes/user.route');
 const uploadRoute = require('../routes/upload.route');
 const petRoute = require('../routes/pet.route');
+const taskRoute = require('../routes/task.route');
 
 const router = express.Router();
 
@@ -26,6 +27,10 @@ const defaultRoutes = [
   {
     path: '/pets',
     route: petRoute
+  },
+  {
+    path: '/tasks',
+    route: taskRoute
   }
 ]
 

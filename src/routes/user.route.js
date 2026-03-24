@@ -18,6 +18,13 @@ router.post(
     userController.createAccount
 )
 
+// Lấy danh sách tài khoản
+router.get(
+    '/user-accounts-list',
+    validate(baseValidation.queryOptions),
+    userController.getListAccounts
+)
+
 router.use(protect, authorize('admin', 'mod', 'specialist', 'employee'));
 
 module.exports = router;

@@ -29,6 +29,10 @@ module.exports = (sequelize, DataTypes) => {
             Pet.hasMany(models.TaskPet, {
                 foreignKey: 'pet_id',
                 as: 'pets'
+            }),
+            Pet.hasMany(models.PetImage, {
+                foreignKey: 'pet_id',
+                as: 'petImages'
             })
         }
     };

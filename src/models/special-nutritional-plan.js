@@ -28,12 +28,12 @@ module.exports = (sequelize, DataTypes) => {
         // food: thức ăn
         food: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
         // amount: số lượng
         amount: {
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
         // frequency: tần suất
         frequency: {
@@ -43,11 +43,12 @@ module.exports = (sequelize, DataTypes) => {
         // nutritional_supplements: bổ sung thêm dinh dưỡng
         nutritional_supplements: {
             type: DataTypes.TEXT,
-            allowNull: false
-        }
+            allowNull: true
+        },
+        
     }, {
         sequelize,
-        modelName: 'SpecialNutritionalPlan'
+        modelName: 'SpecialNutritionalPlan',
     });
 
     return SpecialNutritionalPlan

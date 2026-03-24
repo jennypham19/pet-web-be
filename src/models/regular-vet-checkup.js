@@ -38,12 +38,12 @@ module.exports = (sequelize, DataTypes) => {
         // health_condition: tình trạng sức khỏe
         health_condition: {
             type: DataTypes.TEXT,
-            allowNull: false
+            allowNull: true
         },
         // conclusion: kết luận
         conclusion: {
             type: DataTypes.TEXT,
-            allowNull: false
+            allowNull: true
         }
     }, {
         sequelize,

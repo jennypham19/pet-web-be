@@ -101,7 +101,44 @@ const queryAccounts = async(queryOptions) => {
     }
 }
 
+
+// Lấy chi tiết tài khoản
+const getAccount = async(id) => {
+    try {
+        const accountDB = await User.findOne({
+            where: { id },
+            order: [[ 'createdAt', 'DESC']]
+        })
+        const newAccount = accountDB.toJSON();
+        const account =  {
+                id: newAccount.id,
+                name: newAccount.name,
+                account: newAccount.account,
+                role: newAccount.role,
+                gender: newAccount.gender ? newAccount.gender : null,
+                position: newAccount.position ? newAccount.position : null,
+                title: newAccount.title ? newAccount : null,
+                dob: newAccount.dob ? newAccount.dob : null,
+                cccd: newAccount.cccd ? newAccount.cccd : null,
+                email: newAccount.email ? newAccount.email : null,
+                phone: newAccount.phone ? newAccount.phone : null,
+                address: newAccount.address ? newAccount.address : null,
+                isActived: newAccount.is_actived,
+                isDefaultType: newAccount.is_default_type,
+                isReset: newAccount.is_reset,
+                isDeleted: newAccount.is_deleted,
+                avatarUrl: newAccount.avatar_url ? newAccount.avatar_url : null,
+                createdAt: newAccount.createdAt,
+                updatedAt: newAccount.updatedAt
+            }
+
+        return account
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    } 
+}
 module.exports = {
     createAccount,
-    queryAccounts
+    queryAccounts,
+    getAccount
 }

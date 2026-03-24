@@ -20,10 +20,23 @@ const updateStatus = {
         id: Joi.string().required()
     }),
     body: Joi.object().keys({
-        status: Joi.string().required()
+        status: Joi.string().required(),
+        finishedDate: Joi.string().optional().allow('', null),
+        type: Joi.string().required()
+    })
+}
+
+const updateImagesForTask = {
+    params: Joi.object().keys({
+        id: Joi.string().required()
+    }),
+    body: Joi.object().keys({
+        uploadedBy: Joi.string().required(),
+        images: Joi.array().required()
     })
 }
 module.exports = {
     createTask,
-    updateStatus
+    updateStatus,
+    updateImagesForTask
 }

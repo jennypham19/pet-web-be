@@ -23,8 +23,22 @@ const updateStatus = catchAsync(async(req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Cập nhật trạng thái công việc thành công'})
 })
 
+// Cập nhật hình ảnh cho công việc
+const updateImagesForTask = catchAsync(async(req, res) => {
+    await taskService.updateImagesForTask(req.params.id, req.body);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Cập nhật hình ảnh công việc thành công'})
+})
+
+// Lấy chi tiết công việc
+const getTask = catchAsync(async(req, res) => {
+    const task = await taskService.queryTask(req.params.id);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Lấy danh sách thành công', data: task})
+})
+
 module.exports = {
     createTask,
     getListTasks,
-    updateStatus
+    updateStatus,
+    updateImagesForTask,
+    getTask
 }

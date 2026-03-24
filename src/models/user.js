@@ -8,6 +8,10 @@ module.exports = (sequelize, DataTypes) => {
             User.hasMany(models.Task, {
                 foreignKey: 'created_by',
                 as: 'createdByTask'
+            }),
+            User.hasMany(models.TaskImage, {
+                foreignKey: 'uploaded_by',
+                as: 'uploadedByTaskImage'
             })
         }
     };

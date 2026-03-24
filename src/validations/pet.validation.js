@@ -11,8 +11,38 @@ const createPet = {
             breedingStatus: Joi.string().required(),
             urlAvatar: Joi.string().required(),
             nameAvatar: Joi.string().required(),
-        })
-
+        }),
+        health: Joi.object({
+            clinicName: Joi.string().required(),
+            address: Joi.string().required(),
+            phone: Joi.string().required(),
+            attendingVet: Joi.string().required()
+        }),
+        vaccination: Joi.object({
+            medicationNameVac: Joi.string().required(),
+            firstDoseDate: Joi.string().required(),
+            boosterDate: Joi.string().required(),
+            adverseReaction: Joi.string().required()
+        }),
+        deworming: Joi.object({
+            medicationName: Joi.string().required(),
+            dosage: Joi.string().required(),
+            dewormingDate: Joi.string().required(),
+            nextDewormingDate: Joi.string().required()
+        }),
+        checkup: Joi.object({
+            examinationDate: Joi.string().optional().allow('', null),
+            recheckDate: Joi.string().optional().allow('', null),
+            healthCondition: Joi.string().optional().allow('', null),
+            conclusion: Joi.string().optional().allow('', null)
+        }).allow('', null),
+        nutrition: Joi.object({
+            food: Joi.string().optional().allow('', null),
+            amount: Joi.string().optional().allow('', null),
+            frequency: Joi.string().optional().allow('', null),
+            nutritionalSupplements: Joi.string().optional().allow('', null)
+        }).allow('', null),
+        images: Joi.array().optional()
     })
 }
 

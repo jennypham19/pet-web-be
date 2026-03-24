@@ -18,7 +18,14 @@ const getListAccounts = catchAsync(async(req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Lấy danh sách tài khoản thành công.', data: users})
 })
 
+// Lấy chi tiết tài khoản
+const getAccount = catchAsync(async(req, res) => {
+    const user = await userService.getAccount(req.params.id);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Lấy chi tiết tài khoản thành công.', data: user})
+})
+
 module.exports = {
     createAccount,
-    getListAccounts
+    getListAccounts,
+    getAccount
 }

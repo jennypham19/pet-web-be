@@ -27,4 +27,11 @@ router.get(
 
 router.use(protect, authorize('admin', 'mod', 'specialist', 'employee'));
 
+// Lấy chi tiết tài khoản
+router.get(
+    '/user-account-detail/:id',
+    validate(baseValidation.queryOption),
+    userController.getAccount
+)
+
 module.exports = router;

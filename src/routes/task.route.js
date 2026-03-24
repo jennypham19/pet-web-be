@@ -9,7 +9,7 @@ const validate = require('../middlewares/validate');
 
 const router = express.Router();
 
-router.use(protect, authorize('mod', 'specialist'));
+router.use(protect, authorize('mod', 'specialist', 'employee'));
 
 // tạo công việc 
 router.post(
@@ -30,6 +30,20 @@ router.patch(
     '/status-updated/:id',
     validate(taskValidation.updateStatus),
     taskController.updateStatus
+)
+
+// Cập nhật hình ảnh công việc
+router.put(
+    '/images-task-uploaded/:id',
+    validate(taskValidation.updateImagesForTask),
+    taskController.updateImagesForTask
+)
+
+// Lấy chi tiết công việc
+router.get(
+    '/detail-task/:id',
+    validate(baseValidation.queryOption),
+    taskController.getTask
 )
 
 module.exports = router;

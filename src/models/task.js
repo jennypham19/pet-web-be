@@ -12,6 +12,10 @@ module.exports = (sequelize, DataTypes) => {
             Task.hasMany(models.TaskPet, {
                 foreignKey: 'task_id',
                 as: 'task'
+            }),
+            Task.hasMany(models.TaskImage, {
+                foreignKey: 'task_id',
+                as: 'taskImages'
             })
         }
     }
@@ -68,6 +72,11 @@ module.exports = (sequelize, DataTypes) => {
         is_updated_image: {
             type: DataTypes.BOOLEAN,
             defaultValue: false
+        },
+        // finished_date: thời gian kết thúc
+        finished_date: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     }, {
         sequelize,

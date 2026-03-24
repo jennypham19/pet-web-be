@@ -1,5 +1,5 @@
 // src/services/task.service.js
-const { Task, TaskPet, Pet, User, sequelize } = require('../models');
+const { Task, TaskPet, Pet, User, TaskImage, sequelize } = require('../models');
 const { StatusCodes } = require('http-status-codes');
 const ApiError = require('../utils/ApiError');
 const { Op } = require('sequelize');
@@ -82,6 +82,7 @@ const queryTasks = async(queryOptions) => {
                 },
                 status: newTask.status,
                 isUpdatedImage: newTask.is_updated_image,
+                finishedDate: newTask.finished_date,
                 pets: (newTask.task ?? [])
                     .map((el) => {
                         const pet = el.petsTask;
@@ -104,13 +105,122 @@ const queryTasks = async(queryOptions) => {
     }
 }
 
+// Lấy ra danh sách công việc
+const queryTask = async(id) => {
+    try {
+        const taskDB = await Task.findOne({
+            where: { id },
+            include: [
+                {
+                    model: TaskPet,
+                    as: 'task',
+                    include: [{
+                        model: Pet,
+                        as: 'petsTask'
+                    }]
+                },
+                {
+                    model: User,
+                    as: 'createdBy'
+                },
+                {
+                    model: TaskImage,
+                    as: 'taskImages',
+                    include: [{
+                        model: User,
+                        as: 'uploadedBy'
+                    }]
+                }
+            ],
+            order: [[ 'createdAt', 'DESC' ]],
+            distinct: true
+        });
+        const newTask = taskDB.toJSON();
+        const task = {
+            id: newTask.id,
+            name: newTask.name,
+            time: newTask.time,
+            hour: newTask.hour,
+            frequency: newTask.frequency,
+            otherFrequency: newTask.other_frequency ? newTask.other_frequency : null,
+            requiredNote: newTask.required_note,
+            manager: {
+                name: newTask.createdBy.name,
+                role: newTask.createdBy.role,
+                phone: newTask.createdBy.phone
+            },
+            status: newTask.status,
+            isUpdatedImage: newTask.is_updated_image,
+            finishedDate: newTask.finished_date,
+            pets: (newTask.task ?? [])
+                .map((el) => {
+                const pet = el.petsTask;
+                    return {
+                        name: pet.name,
+                        sex: pet.sex,
+                        urlAvatar: pet.url_avatar
+                    }
+                }),
+            images: (newTask.taskImages ?? [])
+                .map((img) => {
+                    return {
+                        id: img.id,
+                        nameImage: img.name_image,
+                        urlImage: img.url_image,
+                        uploadedDate: img.uploaded_date,
+                        createdAt: img.createdAt,
+                        updatedAt: img.updatedAt,
+                        uploadedBy: img.uploadedBy.name
+                    }
+                })
+        }
+        return task
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
+
 //cập nhật trạng thái
 const updatedStatus = async(id, payload) => {
     try {
+        const { status, finishedDate, type } = payload;
         const task = await getTaskById(id);
-        task.status = payload.status,
-        task.save()
+        if(type === 'start'){
+            task.finished_date = null
+        }
+        if(type === 'completed'){
+            task.finished_date = finishedDate
+        }
+        task.status = status,
+        await task.save()
     } catch (error) {
+        if(error instanceof ApiError) throw error;
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
+
+// cập nhật hình ảnh cho công việc
+const updateImagesForTask = async(id, imagesPayload) => {
+    const transaction = await sequelize.transaction();
+    try {
+        const { images, uploadedBy} = imagesPayload;
+        const task = await getTaskById(id);
+        for(const image of images){
+            await TaskImage.create({
+                task_id: task.id,
+                name_image: image.nameImage,
+                url_image: image.urlImage,
+                uploaded_date: image.uploadedDate,
+                uploaded_by: uploadedBy
+            }, { transaction })
+        }
+        
+        task.is_updated_image = true;
+        await task.save({ transaction })
+
+        await transaction.commit()
+    } catch (error) {
+        await transaction.rollback();
         if(error instanceof ApiError) throw error;
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
     }
@@ -119,5 +229,7 @@ const updatedStatus = async(id, payload) => {
 module.exports = {
     createTask,
     queryTasks,
-    updatedStatus
+    updatedStatus,
+    updateImagesForTask,
+    queryTask
 }

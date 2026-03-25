@@ -44,7 +44,7 @@ const storage = new CloudinaryStorage({
     const fileHash = crypto.createHash("md5").update(baseName).digest("hex");
 
     // const publicId = `${baseName}_${fileHash}`; // ⚠ KHÔNG có .pdf
-    const publicId = baseName; // ⚠ KHÔNG có .pdf
+    const publicId = `${baseName}_${uniqueId}`; // ⚠ KHÔNG có .pdf
     const resourceType = getCloudinaryResourceType(file.mimetype);
 
     return {

@@ -43,8 +43,8 @@ const storage = new CloudinaryStorage({
     
     const fileHash = crypto.createHash("md5").update(baseName).digest("hex");
 
-    const publicId = `${baseName}_${fileHash}`; // ⚠ KHÔNG có .pdf
-    // const publicId = baseName; // ⚠ KHÔNG có .pdf
+    // const publicId = `${baseName}_${fileHash}`; // ⚠ KHÔNG có .pdf
+    const publicId = baseName; // ⚠ KHÔNG có .pdf
     const resourceType = getCloudinaryResourceType(file.mimetype);
 
     return {
@@ -55,7 +55,7 @@ const storage = new CloudinaryStorage({
       format: ext, // chuẩn Cloudinary
       overwrite: false,
       use_filename: true, // giữ tên gốc của file
-      unique_filename: false, // không thêm chuỗi random vào
+      unique_filename: true, // không thêm chuỗi random vào
     };
   }
 });

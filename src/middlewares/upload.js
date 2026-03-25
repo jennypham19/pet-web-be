@@ -32,6 +32,7 @@ const storage = new CloudinaryStorage({
       folder = `${folder}/${req.body.type}`;
     }
 
+    const uniqueId = uuidv4();
     const correctName = Buffer.from(file.originalname, "latin1").toString("utf8");
     
     let ext = path.extname(file.originalname).toLowerCase().replace(".", "");

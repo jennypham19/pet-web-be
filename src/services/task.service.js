@@ -156,8 +156,16 @@ const queryTask = async(id) => {
                 .map((el) => {
                 const pet = el.petsTask;
                     return {
+                        id: pet.id,
                         name: pet.name,
                         sex: pet.sex,
+                        dob: pet.dob,
+                        species: pet.species,
+                        type: pet.type,
+                        breedingStatus: pet.breeding_status,
+                        createdAt: pet.createdAt,
+                        updatedAt: pet.updatedAt,
+                        nameAvatar: pet.name_avatar,
                         urlAvatar: pet.url_avatar
                     }
                 }),

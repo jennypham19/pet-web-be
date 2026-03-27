@@ -9,7 +9,7 @@ const validate = require('../middlewares/validate');
 
 const router = express.Router();
 
-router.use(protect, authorize('mod', 'specialist'));
+router.use(protect, authorize('mod', 'specialist', 'employee'));
 
 // tạo tài khoản nhân sự
 router.post(
@@ -23,6 +23,13 @@ router.get(
     '/pets-list',
     validate(baseValidation.queryOptions),
     petController.getListPets
+)
+
+// Lấy chi tiết hồ sơ thú cưng
+router.get(
+    '/detail-pet/:id',
+    validate(baseValidation.queryOption),
+    petController.getPet
 )
 
 module.exports = router;

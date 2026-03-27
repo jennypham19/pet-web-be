@@ -62,7 +62,7 @@ const createPet = async(petBody) => {
         if(images.length > 0){
             for(const image of images){
                 await PetImage.create({
-                    pet_id: petDB.id, name_image: image.nameImage, url_image: urlImage
+                    pet_id: petDB.id, name_image: image.nameImage, url_image: image.urlImage
                 }, { transaction })                
             }
         }
@@ -116,7 +116,119 @@ const queryListPets= async(queryOptions) => {
     }
 }
 
+// Lấy chi tiết hồ sơ thú cưng
+const queryPet= async(id) => {
+    try {
+        const petDB = await Pet.findOne({
+            where: { id },
+            include:[
+                {
+                    model: HealthPet,
+                    as: 'petHealth'
+                },
+                {
+                    model: Vaccination,
+                    as: 'petVaccination'
+                },
+                {
+                    model: Deworming,
+                    as: 'petDeworming'
+                },
+                {
+                    model: RegularVetCheckup,
+                    as: 'petRegularVetCheckup'
+                },
+                {
+                    model: SpecialNutritionalPlan,
+                    as: 'petSpecialNutritionalPlan'
+                },
+                {
+                    model: PetImage,
+                    as: 'petImages'
+                }
+            ],
+            order: [[ 'createdAt', 'DESC' ]]
+        });
+
+        if (!petDB) {
+            throw new ApiError(StatusCodes.NOT_FOUND, "Không tìm thấy thú cưng");
+        }
+        const newPet = petDB.toJSON();
+        const pet = {
+            id: newPet.id,
+            name: newPet.name,
+            sex: newPet.sex,
+            dob: newPet.dob,
+            species: newPet.species,
+            type: newPet.type,
+            breedingStatus: newPet.breeding_staus,
+            createdAt: newPet.createdAt,
+            updatedAt: newPet.updatedAt,
+            nameAvatar: newPet.name_avatar,
+            urlAvatar: newPet.url_avatar,
+            petHealth: newPet.petHealth ? {
+                id: newPet.petHealth.id,
+                clinicName: newPet.petHealth.clinic_name,
+                address: newPet.petHealth.address,
+                phone: newPet.petHealth.phone,
+                attendingVet: newPet.petHealth.attending_vet,
+                createdAt: newPet.petHealth.createdAt,
+                updatedAt: newPet.petHealth.updatedAt
+            } : null,
+            petVaccination: newPet.petVaccination ? {
+                id: newPet.petVaccination.id,
+                medicationName: newPet.petVaccination.medication_name,
+                firstDoseDate: newPet.petVaccination.first_dose_date,
+                boosterDate: newPet.petVaccination.booster_date,
+                adverseReaction: newPet.petVaccination.adverse_reaction,
+                createdAt: newPet.petVaccination.createdAt,
+                updatedAt: newPet.petVaccination.updatedAt
+            } : null,
+            petDeworming: newPet.petDeworming ? {
+                id: newPet.petDeworming.id,
+                medicationName: newPet.petDeworming.medication_name,
+                dosage: newPet.petDeworming.dosage,
+                dewormingDate: newPet.petDeworming.deworming_date,
+                nextDewormingDate: newPet.petDeworming.next_deworming_date,
+                createdAt: newPet.petDeworming.createdAt,
+                updatedAt: newPet.petDeworming.updatedAt
+            } : null,
+            petRegularVetCheckup: newPet.petRegularVetCheckup && !isEmptyObject(newPet.petRegularVetCheckup) ? {
+                id: newPet.petRegularVetCheckup.id,
+                examinationDate: newPet.petRegularVetCheckup.examination_date,
+                recheckDate: newPet.petRegularVetCheckup.recheck_date,
+                healthCondition: newPet.petRegularVetCheckup.health_condition,
+                conclusion: newPet.petRegularVetCheckup.conclusion,
+                createdAt: newPet.petRegularVetCheckup.createdAt,
+                updatedAt: newPet.petRegularVetCheckup.updatedAt
+            } : null,
+            petSpecialNutritionalPlan: newPet.petSpecialNutritionalPlan &&  !isEmptyObject(newPet.petSpecialNutritionalPlan) ? {
+                id: newPet.petSpecialNutritionalPlan.id,
+                food: newPet.petSpecialNutritionalPlan.food,
+                amount: newPet.petSpecialNutritionalPlan.amount,
+                frequency: newPet.petSpecialNutritionalPlan.frequency,
+                nutritionalSupplements: newPet.petSpecialNutritionalPlan.nutritional_supplements,
+                createdAt: newPet.petSpecialNutritionalPlan.createdAt,
+                updatedAt: newPet.petSpecialNutritionalPlan.updatedAt
+            } : null,
+            petImages: (newPet.petImages ?? [])
+                .map((el) => {
+                    return{
+                        id: el.id,
+                        nameImage: el.name_image,
+                        urlImage: el.url_image,
+                        createdAt: el.createdAt,
+                        updatedAt: el.updatedAt
+                    }
+                })
+        }
+        return pet
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
 module.exports = {
     createPet,
-    queryListPets
+    queryListPets,
+    queryPet
 }

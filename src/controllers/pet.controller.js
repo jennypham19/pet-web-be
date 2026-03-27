@@ -18,7 +18,14 @@ const getListPets = catchAsync(async (req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Lấy danh sách thành công', data: pets})
 })
 
+// Lấy chi tiết hồ sơ thú cưng
+const getPet = catchAsync(async (req, res) => {
+    const pet = await petService.queryPet(req.params.id);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Lấy chi tiết hồ sơ thú cưng thành công.', data: pet})
+})
+
 module.exports = {
     createPet,
-    getListPets
+    getListPets,
+    getPet
 }

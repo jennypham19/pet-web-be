@@ -24,8 +24,16 @@ const getPet = catchAsync(async (req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Lấy chi tiết hồ sơ thú cưng thành công.', data: pet})
 })
 
+// Lấy danh sách hình ảnh của hồ sơ thú cưng
+const queryListPetImages = catchAsync(async (req, res) => {
+    const imagesPet = pick(req.query, ['page', 'limit']);
+    const petImages = await petService.queryListPetImages(imagesPet);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Lấy danh sách hình ảnh của hồ sơ thú cưng thành công.', data: petImages})
+})
+
 module.exports = {
     createPet,
     getListPets,
-    getPet
+    getPet,
+    queryListPetImages
 }

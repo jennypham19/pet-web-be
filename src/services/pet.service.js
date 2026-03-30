@@ -227,8 +227,42 @@ const queryPet= async(id) => {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
     }
 }
+
+// Lấy danh sách hình ảnh thú cưng
+// Lấy danh sách hồ sơ thú cưng
+const queryListPetImages= async(queryOptions) => {
+    try {
+        const { page, limit } = queryOptions;
+        const offset = (page - 1) * limit;
+        const { count, rows: imagesDB } = await PetImage.findAndCountAll({
+            limit,
+            offset,
+            order: [[ 'createdAt', 'DESC' ]]
+        });
+        const totalPages = Math.ceil(count/limit);
+        const images = imagesDB.map((image) => {
+            const newImage = image.toJSON();
+            return {
+                id: newImage.id,
+                nameImage: newImage.name_image,
+                urlImage: newImage.url_image,
+                createdAt: newImage.createdAt,
+                updatedAt: newImage.updatedAt
+            }
+        })
+        return {
+            data: images,
+            totalPages,
+            currentPage: page,
+            total: count
+        }
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
 module.exports = {
     createPet,
+    queryListPetImages,
     queryListPets,
     queryPet
 }

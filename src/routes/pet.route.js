@@ -32,4 +32,11 @@ router.get(
     petController.getPet
 )
 
+// Lấy danh sách hình ảnh của hồ sơ thú cưng
+router.get(
+    '/list-pet-images',
+    validate(baseValidation.queryOptions),
+    petController.queryListPetImages
+)
+
 module.exports = router;

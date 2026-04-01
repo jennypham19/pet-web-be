@@ -26,7 +26,7 @@ const login = async(account, password) => {
                 gender: newUser.gender,
                 position: newUser.position,
                 title: newUser.title,
-                dob: newUser.dob,
+                dob: newUser.date_of_birth,
                 cccd: newUser.cccd,
                 email: newUser.email,
                 phone: newUser.phone,

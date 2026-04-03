@@ -113,6 +113,10 @@ module.exports = (sequelize, DataTypes) => {
         is_deleted: {
             type: DataTypes.INTEGER,
             defaultValue: 1 // 1: khôn xóa, -1: đã xóa
+        },
+        professional_biography: {
+            type: DataTypes.TEXT,
+            allowNull: true
         }
     }, {
         sequelize,

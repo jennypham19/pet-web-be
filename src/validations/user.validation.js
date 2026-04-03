@@ -21,6 +21,26 @@ const createAccount = {
     })
 }
 
+const updateProfile = {
+    params: Joi.object().keys({
+        id: Joi.string().required()
+    }),
+    body: Joi.object().keys({
+        avatarUrl: Joi.string().required(),
+        name: Joi.string().required(),
+        gender: Joi.string().required(),
+        dob: Joi.string().required(),
+        cccd: Joi.string().required(),
+        position: Joi.string().required(),
+        title: Joi.string().required(),
+        email: Joi.string().required(),
+        phone: Joi.string().required(),
+        address: Joi.string().required(),
+        professionalBiography: Joi.string().allow('', null)
+    })
+}
+
 module.exports = {
     createAccount,
+    updateProfile
 }

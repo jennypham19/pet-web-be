@@ -87,7 +87,8 @@ const queryAccounts = async(queryOptions) => {
                 isDeleted: newAccount.is_deleted,
                 avatarUrl: newAccount.avatar_url ? newAccount.avatar_url : null,
                 createdAt: newAccount.createdAt,
-                updatedAt: newAccount.updatedAt
+                updatedAt: newAccount.updatedAt,
+                professionalBiography: newAccount.professional_biography ? newAccount.professional_biography : null
             }
         })
         return {
@@ -129,7 +130,8 @@ const getAccount = async(id) => {
                 isDeleted: newAccount.is_deleted,
                 avatarUrl: newAccount.avatar_url ? newAccount.avatar_url : null,
                 createdAt: newAccount.createdAt,
-                updatedAt: newAccount.updatedAt
+                updatedAt: newAccount.updatedAt,
+                professionalBiography: newAccount.professional_biography ? newAccount.professional_biography : null
             }
 
         return account
@@ -137,8 +139,48 @@ const getAccount = async(id) => {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
     } 
 }
+
+// Cập nhật hồ sơ thông tin
+const updateProfile = async(id, profileBody) => {
+    try {
+        const { avatarUrl, name, gender, dob, cccd, position, title, professionalBiography, email, phone, address } = profileBody;
+        const userDB = await getUserById(id);
+        await userDB.update({
+            avatar_url: avatarUrl, name, gender, date_of_birth: dob, cccd, position, title, professional_biography: professionalBiography, email, phone, address
+        })
+        const newUser = userDB.toJSON();
+        const user = {
+                id: newUser.id,
+                name: newUser.name,
+                account: newUser.account,
+                password: newUser.password,
+                gender: newUser.gender,
+                position: newUser.position,
+                title: newUser.title,
+                dob: newUser.date_of_birth,
+                cccd: newUser.cccd,
+                email: newUser.email,
+                phone: newUser.phone,
+                address: newUser.address,
+                isActived: newUser.is_actived,
+                isDefaultType: newUser.is_default_type,
+                isReset: newUser.is_reset,
+                isDeleted: newUser.is_deleted,
+                avatarUrl: newUser.avatar_url,
+                role: newUser.role,
+                createdAt: newUser.createdAt,
+                updatedAt: newUser.updatedAt,
+                professionalBiography: newUser.professional_biography ? newUser.professional_biography : null
+            
+        };
+        return user;
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
 module.exports = {
     createAccount,
     queryAccounts,
-    getAccount
+    getAccount,
+    updateProfile
 }

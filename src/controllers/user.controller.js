@@ -24,8 +24,15 @@ const getAccount = catchAsync(async(req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Lấy chi tiết tài khoản thành công.', data: user})
 })
 
+// Cập nhật hồ sơ
+const updateProfile = catchAsync(async(req, res) => {
+    const user = await userService.updateProfile(req.params.id, req.body);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Cập nhật hồ sơ người dùng thành công. ', data: user })
+})
+
 module.exports = {
     createAccount,
     getListAccounts,
-    getAccount
+    getAccount,
+    updateProfile
 }

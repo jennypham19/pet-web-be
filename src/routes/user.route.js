@@ -9,6 +9,22 @@ const validate = require('../middlewares/validate');
 
 const router = express.Router();
 
+router.use(protect, authorize('admin', 'mod', 'specialist', 'employee'));
+
+// Lấy chi tiết tài khoản
+router.get(
+    '/user-account-detail/:id',
+    validate(baseValidation.queryOption),
+    userController.getAccount
+)
+
+// Cập nhật hồ sơ
+router.put(
+    '/profile-user-updated/:id',
+    validate(userValidation.updateProfile),
+    userController.updateProfile
+)
+
 router.use(protect, authorize('admin'));
 
 // tạo tài khoản nhân sự
@@ -23,15 +39,6 @@ router.get(
     '/user-accounts-list',
     validate(baseValidation.queryOptions),
     userController.getListAccounts
-)
-
-router.use(protect, authorize('admin', 'mod', 'specialist', 'employee'));
-
-// Lấy chi tiết tài khoản
-router.get(
-    '/user-account-detail/:id',
-    validate(baseValidation.queryOption),
-    userController.getAccount
 )
 
 module.exports = router;

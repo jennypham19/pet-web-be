@@ -10,8 +10,11 @@ const login = async(account, password) => {
         const userDB = await User.findOne({
             where: { account }
         })
-        if(!userDB || !(await bcrypt.compare(password, userDB.password))) {
-            throw new ApiError(StatusCodes.UNAUTHORIZED, 'Tên đăng nhập hoặc mật khẩu không chính xác');
+        if(!userDB) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Tài khoản không chính xác');
+        }
+        if(!(await bcrypt.compare(password, userDB.password))) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Mật khẩu không chính xác');
         }
         if(userDB.is_active === 0) {
             throw new ApiError(StatusCodes.FORBIDDEN, 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên');
@@ -38,7 +41,8 @@ const login = async(account, password) => {
                 avatarUrl: newUser.avatar_url,
                 role: newUser.role,
                 createdAt: newUser.createdAt,
-                updatedAt: newUser.updatedAt
+                updatedAt: newUser.updatedAt,
+                professionalBiography: newUser.professional_biography ? newUser.professional_biography : null
             
         };
 

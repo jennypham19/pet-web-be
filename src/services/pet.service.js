@@ -232,7 +232,8 @@ const queryPet= async(id) => {
 // Lấy danh sách hồ sơ thú cưng
 const queryListPetImages= async(queryOptions) => {
     try {
-        const { page, limit } = queryOptions;
+        const page = Number(queryOptions.page) || 1;
+        const limit = Number(queryOptions.limit) || 10;
         const offset = (page - 1) * limit;
         const { count, rows: imagesDB } = await PetImage.findAndCountAll({
             limit,
@@ -260,9 +261,25 @@ const queryListPetImages= async(queryOptions) => {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
     }
 }
+
+// Cập nhật hình ảnh hồ sơ thú cưng
+const updatePetImage = async(imagePetBody) => {
+    try {
+        const { imagePets } = imagePetBody;
+        for(const imagePet of imagePets){
+            const { petId, urlImage, nameImage } = imagePet;
+            await PetImage.create({
+                pet_id: petId, name_image: nameImage, url_image: urlImage
+            })
+        }
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
 module.exports = {
     createPet,
     queryListPetImages,
     queryListPets,
-    queryPet
+    queryPet,
+    updatePetImage
 }

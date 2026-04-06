@@ -46,6 +46,17 @@ const createPet = {
     })
 }
 
+const uploadPetImage = {
+    body: Joi.object().keys({
+        imagePets: Joi.array().items({
+            petId: Joi.string().required(),
+            urlImage: Joi.string().required(),
+            nameImage: Joi.string().required()
+        })
+    })
+}
+
 module.exports = {
-    createPet
+    createPet,
+    uploadPetImage
 }

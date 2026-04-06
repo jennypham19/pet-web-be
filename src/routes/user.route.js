@@ -41,4 +41,17 @@ router.get(
     userController.getListAccounts
 )
 
+// Vô hiệu hóa tài khoản
+router.patch(
+    '/user-account-disabled/:id',
+    validate(baseValidation.queryOption),
+    userController.deactivateAccount
+)
+// Kích hoạt tài khoản
+router.patch(
+    '/user-account-activated/:id',
+    validate(baseValidation.queryOption),
+    userController.activateAccount
+)
+
 module.exports = router;

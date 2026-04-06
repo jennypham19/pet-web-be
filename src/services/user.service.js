@@ -46,7 +46,7 @@ const queryAccounts = async(queryOptions) => {
     try {
         const { page, limit, searchTerm } = queryOptions;
         const offset = (page - 1) * limit;
-        const whereClause = {};
+        const whereClause = { is_actived: 1 };
         if(searchTerm){
             whereClause[Op.or] = [
                 { name: { [Op.iLike]: `%${searchTerm}%` }},
@@ -178,9 +178,31 @@ const updateProfile = async(id, profileBody) => {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
     }
 }
+
+// kích hoạt lại tài khoản
+const activateAccount = async(id) => {
+    try { 
+        const userDB = await getUserById(id);
+        await userDB.update({ is_actived: 1 });
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra khi kích hoạt tài khoản: " + error.message)
+    }
+}
+
+// vô hiệu hóa tài khoản
+const deactivateAccount = async(id) => {
+    try {
+        const userDB = await getUserById(id);
+        await userDB.update({ is_actived: -1 });
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra khi vô hiệu hóa tài khoản: " + error.message)
+    }
+}
 module.exports = {
     createAccount,
     queryAccounts,
     getAccount,
-    updateProfile
+    updateProfile,
+    activateAccount,
+    deactivateAccount
 }

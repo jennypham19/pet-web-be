@@ -30,9 +30,23 @@ const updateProfile = catchAsync(async(req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Cập nhật hồ sơ người dùng thành công. ', data: user })
 })
 
+// Vô hiệu hóa tài khoản
+const deactivateAccount = catchAsync(async(req, res) => {
+    await userService.deactivateAccount(req.params.id);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Vô hiệu hóa tài khoản thành công.' })
+})
+
+// Kích hoạt tài khoản
+const activateAccount = catchAsync(async(req, res) => {
+    await userService.activateAccount(req.params.id);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Kích hoạt tài khoản thành công.' })
+})
+
 module.exports = {
     createAccount,
     getListAccounts,
     getAccount,
-    updateProfile
+    updateProfile,
+    deactivateAccount,
+    activateAccount
 }

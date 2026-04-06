@@ -39,4 +39,11 @@ router.get(
     petController.queryListPetImages
 )
 
+// Cập nhật hình ảnh của hồ sơ thú cưng
+router.post(
+    '/pet-images-add',
+    validate(petValidation.uploadPetImage),
+    petController.updatePetImage
+)
+
 module.exports = router;

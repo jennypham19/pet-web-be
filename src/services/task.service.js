@@ -234,6 +234,21 @@ const updateImagesForTask = async(id, imagesPayload) => {
     }
 }
 
+// lặp lại công việc đã được tạo cho ngày mai
+const rolloverOrRecreateTasksForToday = async(targetDateString) => {
+    const transaction = await sequelize.transaction();
+    try {
+        const previousDate = new Date(targetDateString);
+        previousDate.setDate(previousDate.getDate() - 1);
+        const previousDateString = previousDate.toISOString().split('T')[0];
+
+        // Lấy Tasks + id Pet của ngày hôm qua
+    } catch (error) {
+        await transaction.rollback();
+        if(error instanceof ApiError) throw error;
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
 module.exports = {
     createTask,
     queryTasks,

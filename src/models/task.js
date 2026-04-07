@@ -77,6 +77,11 @@ module.exports = (sequelize, DataTypes) => {
         finished_date: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        // due_date: thời gian đến hạn
+        due_date: {
+            type: DataTypes.DATE,
+            allowNull: true
         }
     }, {
         sequelize,

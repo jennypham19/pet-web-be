@@ -25,6 +25,13 @@ router.get(
     taskController.getListTasks
 )
 
+// Lấy danh sách công việc cho chuyên viên
+router.get(
+    '/list-tasks-for-specialist',
+    validate(baseValidation.queryOptions),
+    taskController.getListTasksForSpecialist
+)
+
 // Cập nhật trạng thái
 router.patch(
     '/status-updated/:id',

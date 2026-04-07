@@ -1,5 +1,5 @@
 // src/services/auth.service.js
-const { User, Token } = require('../models');
+const { User, Token, sequelize } = require('../models');
 const bcrypt = require('bcryptjs');
 const { StatusCodes } = require('http-status-codes');
 const ApiError = require('../utils/ApiError');
@@ -7,16 +7,23 @@ const ApiError = require('../utils/ApiError');
 // Đăng nhập
 const login = async(account, password) => {
     try {
+        const normalizedAccount = account.trim().toLowerCase();
+        // const userDB = await User.findOne({
+        //     where: { account }
+        // })
         const userDB = await User.findOne({
-            where: { account }
-        })
+            where: sequelize.where(
+                sequelize.fn('LOWER', sequelize.col('account')),
+                normalizedAccount
+            )
+        });
         if(!userDB) {
             throw new ApiError(StatusCodes.NOT_FOUND, 'Tài khoản không chính xác');
         }
         if(!(await bcrypt.compare(password, userDB.password))) {
             throw new ApiError(StatusCodes.NOT_FOUND, 'Mật khẩu không chính xác');
         }
-        if(userDB.is_active === 0) {
+        if(userDB.is_active === -1) {
             throw new ApiError(StatusCodes.FORBIDDEN, 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên');
         }
 

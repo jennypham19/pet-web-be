@@ -15,6 +15,9 @@ const apiRoutes = require('./routes');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpec = require('./config/swagger.config');
 
+const { initializeDailyJobs } = require('./jobs/dailyTasks.job.js');
+const { initializeTokenCleanupJobs } = require('./jobs/tokenCleanup.job.js');
+
 const app = express();
 
 if(config.env === 'development') {
@@ -66,6 +69,21 @@ if(config.env === 'development') {
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use('/api', apiRoutes);
+
+if (process.env.NODE_ENV !== 'test') {
+  try {
+    Promise.all([ 
+        initializeDailyJobs(),
+        initializeTokenCleanupJobs()
+    ]).then(() => {
+        logger.info('All cron jobs initialization process started.');
+    }).catch(error => {
+        logger.error('Failed during cron jobs initialization:', error);
+    });
+  } catch (error) {
+    logger.error('Synchronous error initializing cron jobs:', error);
+  }
+}
 
 app.use((req, res, next) => {
     next(new ApiError(StatusCodes.NOT_FOUND, "API Route Not Found"))

@@ -53,4 +53,11 @@ router.get(
     taskController.getTask
 )
 
+// Xóa công việc
+router.delete(
+    '/task-deleted/:id',
+    validate(baseValidation.queryOption),
+    taskController.deleteTask
+)
+
 module.exports = router;

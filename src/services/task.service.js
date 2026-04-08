@@ -3,7 +3,8 @@ const { Task, TaskPet, Pet, User, TaskImage, sequelize } = require('../models');
 const { StatusCodes } = require('http-status-codes');
 const ApiError = require('../utils/ApiError');
 const { Op } = require('sequelize');
-const { DateTime } = require('luxon')
+const { DateTime } = require('luxon');
+const { lock } = require('../routes/task.route');
 
 // lấy chi tiết 1 công việc
 const getTaskById = async(id) => {
@@ -19,15 +20,29 @@ const createTask = async(taskBody) => {
     const transaction = await sequelize.transaction();
     try {
         const { name, petIds, time, hour, frequency, otherFrequency, requiredNote, createdBy } = taskBody;
-        // ✅ Parse hour theo timezone VN
+        // ✅ ======== 1.Parse hour theo timezone VN ===========
         const hourDate = DateTime.fromISO(hour, { zone: 'Asia/Ho_Chi_Minh' });
         if (!hourDate.isValid) {
             throw new Error("hour không hợp lệ");
         }
-        // ✅ End of day theo VN
+        // ✅ ======== 2. End of day theo VN ===========
         const dueDate = hourDate.endOf('day').toJSDate();
+
+        // ======= 3. Lấy task lớn nhất trong ngày để xác định task_number cho task mới ===========
+        const lastTaskOfTheDay = await Task.findOne({
+            where: {
+                due_date: dueDate,
+            },
+            order: [['task_number', 'DESC']],
+            transaction,
+            lock: transaction.LOCK.UPDATE // Đặt lock để tránh race condition
+        });
+
+        const nextTaskNumber = lastTaskOfTheDay ? (lastTaskOfTheDay.task_number || 0) + 1 : 1;
+
+        // ======= 4. Tạo task mới với transaction ===========
         const taskDB = await Task.create({
-            name, time, 
+            name, time, task_number: nextTaskNumber,
             hour: hourDate, // Lưu giờ theo timezone VN, Sequelize sẽ tự động chuyển sang UTC khi lưu vào DB 
             frequency, other_frequency: otherFrequency, required_note: requiredNote, created_by: createdBy, due_date: dueDate
         }, { transaction });
@@ -71,7 +86,7 @@ const queryTasks = async(queryOptions) => {
             ],  
             limit,
             offset,
-            order: [[ 'createdAt', 'DESC' ]],
+            order: [[ 'createdAt', 'ASC' ]],
             distinct: true
         });
         const totalPages = Math.ceil(count/limit);
@@ -80,6 +95,8 @@ const queryTasks = async(queryOptions) => {
             return{
                 id: newTask.id,
                 name: newTask.name,
+                taskNumber: newTask.task_number,
+                displayName: `${newTask.task_number}. ${newTask.name}`,
                 time: newTask.time,
                 hour: newTask.hour,
                 frequency: newTask.frequency,
@@ -153,7 +170,7 @@ const queryTasksForSpecialist = async(queryOptions) => {
             ],  
             limit,
             offset,
-            order: [[ 'createdAt', 'DESC' ]],
+            order: [[ 'createdAt', 'ASC' ]],
             distinct: true
         });
         const totalPages = Math.ceil(count/limit);
@@ -162,6 +179,8 @@ const queryTasksForSpecialist = async(queryOptions) => {
             return{
                 id: newTask.id,
                 name: newTask.name,
+                taskNumber: newTask.task_number,
+                displayName: `${newTask.task_number}. ${newTask.name}`,
                 time: newTask.time,
                 hour: newTask.hour,
                 frequency: newTask.frequency,
@@ -331,14 +350,24 @@ const updateImagesForTask = async(id, imagesPayload) => {
 const rolloverOrRecreateTasksForToday = async(targetDateString) => {
     const transaction = await sequelize.transaction();
     try {
-        const previousDate = new Date(targetDateString);
-        previousDate.setDate(previousDate.getDate() - 1);
-        const previousDateString = previousDate.toLocaleDateString('en-CA', {
-            timeZone: 'Asia/Ho_Chi_Minh'
+        // const previousDate = new Date(targetDateString);
+        // previousDate.setDate(previousDate.getDate() - 1);
+        // const previousDateString = previousDate.toLocaleDateString('en-CA', {
+        //     timeZone: 'Asia/Ho_Chi_Minh'
+        // });
+
+        // const startOfDay = new Date(previousDateString + 'T00:00:00.000+07:00');
+        // const endOfDay = new Date(previousDateString + 'T23:59:59.999+07:00');
+
+        // ✅ Ngày hôm qua theo VN
+        const targetDate = DateTime.fromISO(targetDateString, {
+            zone: 'Asia/Ho_Chi_Minh'
         });
 
-        const startOfDay = new Date(previousDateString + 'T00:00:00.000+07:00');
-        const endOfDay = new Date(previousDateString + 'T23:59:59.999+07:00');
+        const previousDate = targetDate.minus({ days: 1 });
+
+        const startOfDay = previousDate.startOf('day').toJSDate();
+        const endOfDay = previousDate.endOf('day').toJSDate();
 
         // Lấy Tasks + id Pet của ngày hôm qua
         const tasksFromPreviousDay = await Task.findAll({
@@ -362,19 +391,31 @@ const rolloverOrRecreateTasksForToday = async(targetDateString) => {
 
         for(const preTaskInstance of tasksFromPreviousDay){
             const preTask = preTaskInstance.toJSON();
-            // ✅ Convert về Date
-            const hourDate = new Date(preTask.hour);
+            // // ✅ Convert về Date
+            // const hourDate = new Date(preTask.hour);
 
-            // ✅ Tăng 1 ngày (giữ nguyên giờ)
-            const nextDayHour = new Date(hourDate);
-            nextDayHour.setDate(nextDayHour.getDate() + 1);
+            // // ✅ Tăng 1 ngày (giữ nguyên giờ)
+            // const nextDayHour = new Date(hourDate);
+            // nextDayHour.setDate(nextDayHour.getDate() + 1);
 
-            // ✅ Tính due_date = cuối ngày của ngày mới
-            const dueDate = new Date(nextDayHour);
-            dueDate.setHours(23, 59, 59, 999);
+            // // ✅ Tính due_date = cuối ngày của ngày mới
+            // const dueDate = new Date(nextDayHour);
+            // dueDate.setHours(23, 59, 59, 999);
+
+            // ✅ Convert hour về VN
+            const hourDate = DateTime.fromJSDate(new Date(preTask.hour), {
+                zone: 'Asia/Ho_Chi_Minh'
+            });
+
+            // ✅ +1 ngày
+            const nextDayHour = hourDate.plus({ days: 1 });
+
+            // ✅ due_date cuối ngày VN
+            const dueDate = nextDayHour.endOf('day');
 
             const newTaskDataDefaults = {
                 name: preTask.name,
+                taskNumber: preTask.task_number, // Tạm thời giữ nguyên số thứ tự, sau khi tạo sẽ update lại nếu có task nào trong ngày mới
                 time: preTask.time,
                 hour: nextDayHour, // Giữ nguyên giờ và đổi ngày
                 frequency: preTask.frequency,

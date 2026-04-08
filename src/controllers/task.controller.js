@@ -55,6 +55,12 @@ const runDeleteOldTasksController = catchAsync(async(req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Xóa công việc cũ thành công', data: result });
 })
 
+// Xóa công việc
+const deleteTask = catchAsync(async(req, res) => {
+    await taskService.deleteTask(req.params.id);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Xóa công việc thành công' });
+})
+
 module.exports = {
     createTask,
     getListTasks,
@@ -63,5 +69,6 @@ module.exports = {
     getTask,
     runRolloverTasksController,
     runDeleteOldTasksController,
-    getListTasksForSpecialist
+    getListTasksForSpecialist,
+    deleteTask
 }

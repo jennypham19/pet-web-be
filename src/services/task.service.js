@@ -2,8 +2,8 @@
 const { Task, TaskPet, Pet, User, TaskImage, sequelize } = require('../models');
 const { StatusCodes } = require('http-status-codes');
 const ApiError = require('../utils/ApiError');
-const { Op, where } = require('sequelize');
-const { defaults } = require('joi');
+const { Op } = require('sequelize');
+const { DateTime } = require('luxon')
 
 // lấy chi tiết 1 công việc
 const getTaskById = async(id) => {
@@ -19,14 +19,17 @@ const createTask = async(taskBody) => {
     const transaction = await sequelize.transaction();
     try {
         const { name, petIds, time, hour, frequency, otherFrequency, requiredNote, createdBy } = taskBody;
-        const hourDate = new Date(hour); // ✅ convert tại đây
-        if (isNaN(hourDate.getTime())) {
+        // ✅ Parse hour theo timezone VN
+        const hourDate = DateTime.fromISO(hour, { zone: 'Asia/Ho_Chi_Minh' });
+        if (!hourDate.isValid) {
             throw new Error("hour không hợp lệ");
         }
-        const dueDate = new Date(hourDate);
-        dueDate.setHours(23, 59, 59, 999); // ✅ cuối ngày
+        // ✅ End of day theo VN
+        const dueDate = hourDate.endOf('day').toJSDate();
         const taskDB = await Task.create({
-            name, time, hour, frequency, other_frequency: otherFrequency, required_note: requiredNote, created_by: createdBy, due_date: dueDate
+            name, time, 
+            hour: hourDate, // Lưu giờ theo timezone VN, Sequelize sẽ tự động chuyển sang UTC khi lưu vào DB 
+            frequency, other_frequency: otherFrequency, required_note: requiredNote, created_by: createdBy, due_date: dueDate
         }, { transaction });
         for(const petId of petIds){
             await TaskPet.create({
@@ -330,22 +333,31 @@ const rolloverOrRecreateTasksForToday = async(targetDateString) => {
     try {
         const previousDate = new Date(targetDateString);
         previousDate.setDate(previousDate.getDate() - 1);
-        const previousDateString = previousDate.toISOString().split('T')[0];
+        const previousDateString = previousDate.toLocaleDateString('en-CA', {
+            timeZone: 'Asia/Ho_Chi_Minh'
+        });
+
+        const startOfDay = new Date(previousDateString + 'T00:00:00.000+07:00');
+        const endOfDay = new Date(previousDateString + 'T23:59:59.999+07:00');
 
         // Lấy Tasks + id Pet của ngày hôm qua
         const tasksFromPreviousDay = await Task.findAll({
             where: {
-                due_date: previousDateString,
+                due_date: {
+                    [Op.between]: [startOfDay, endOfDay]
+                }
             },
             include: [{ model: TaskPet, as: 'task' }],
             transaction
         });
+
         if(!tasksFromPreviousDay || tasksFromPreviousDay.length === 0){
             // Xử lý trường hợp không có công việc nào từ ngày hôm qua
             await transaction.commit();
-            return { createdCount: 0, alreadyExistedOrSkippedCount: 0, totalProcessedFromPreviousDay: 0 }
+            return { createdTaskCount: 0, createdTaskPetCount: 0, alreadyExistedOrSkippedCount: 0, totalProcessedFromPreviousDay: 0 }
         }
-        let createdCount = 0;
+        let createdTaskCount = 0;
+        let createdTaskPetCount = 0;
         let alreadyExistedOrSkippedCount = 0;
 
         for(const preTaskInstance of tasksFromPreviousDay){
@@ -375,24 +387,27 @@ const rolloverOrRecreateTasksForToday = async(targetDateString) => {
                 due_date: dueDate // Đặt thời gian đến hạn là cuối ngày
             }
 
-            const [task, taskCreated] = await Task.findOrCreate({
+            const existed = await Task.findOne({
                 where: {
                     name: newTaskDataDefaults.name,
-                    due_date: dueDate
+                    due_date: newTaskDataDefaults.due_date
                 },
-                defaults: newTaskDataDefaults,
-                transaction,
-            })
+                transaction
+            });
 
-            if(taskCreated) createTask++;
-            else alreadyExistedOrSkippedCount++;
-
+            let task;
+            if (!existed) {
+                task = await Task.create(newTaskDataDefaults, { transaction });
+                createdTaskCount++;
+            } else {
+                alreadyExistedOrSkippedCount++;
+            }
+            
             // Sao chép mối quan hệ với Pet nếu Task mới được tạo
             for(const taskPet of preTask.task){
-                const prePetId = taskPet.toJSON();
                 const newPetTaskDefaults = {
                     task_id: task.id,
-                    pet_id: prePetId.pet_id
+                    pet_id: taskPet.pet_id
                 };
 
                 // Sử dụng findOrCreate để tránh tạo trùng nếu cron chạy lại
@@ -405,12 +420,12 @@ const rolloverOrRecreateTasksForToday = async(targetDateString) => {
                     transaction
                 });
 
-                if(petTaskCreated) createdCount++;
+                if(petTaskCreated) createdTaskPetCount++;
                 else alreadyExistedOrSkippedCount++;
             }
         }
         await transaction.commit();
-        return { createdCount, alreadyExistedOrSkippedCount, totalProcessedFromPreviousDay: tasksFromPreviousDay.length }
+        return { createdTaskCount, createdTaskPetCount, alreadyExistedOrSkippedCount, totalProcessedFromPreviousDay: tasksFromPreviousDay.length }
     } catch (error) {
         await transaction.rollback();
         if(error instanceof ApiError) throw error;
@@ -435,6 +450,21 @@ const deleteOldTasks = async(daysToKeep = 30) => {
         throw error
     }
 }
+
+// xóa công việc
+const deleteTask = async(id) => {
+    try {
+        const task = await getTaskById(id);
+        const taskPets = await TaskPet.findAll({ where: { task_id: id } });
+
+        for(const taskPet of taskPets){
+            await taskPet.destroy();
+        }
+        await task.destroy();
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra khi xóa: " + error.message)
+    }
+}
 module.exports = {
     createTask,
     queryTasks,
@@ -443,5 +473,6 @@ module.exports = {
     queryTask,
     rolloverOrRecreateTasksForToday,
     deleteOldTasks,
-    queryTasksForSpecialist
+    queryTasksForSpecialist,
+    deleteTask
 }

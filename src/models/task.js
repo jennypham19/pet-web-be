@@ -82,6 +82,11 @@ module.exports = (sequelize, DataTypes) => {
         due_date: {
             type: DataTypes.DATE,
             allowNull: true
+        },
+        // task_number: số thứ tự công việc trong ngày
+        task_number: {
+            type: DataTypes.INTEGER,
+            allowNull: true
         }
     }, {
         sequelize,

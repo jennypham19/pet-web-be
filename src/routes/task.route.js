@@ -60,4 +60,10 @@ router.delete(
     taskController.deleteTask
 )
 
+// lấy tổng công việc, công việc ngày hôm nay, tổng nhân sự (chuyên viên + nhân viên đang hoạt động)
+router.get(
+    '/total-task-and-staff',
+    taskController.getTotalTaskAndStaff
+)
+
 module.exports = router;

@@ -86,7 +86,10 @@ const queryTasks = async(queryOptions) => {
             ],  
             limit,
             offset,
-            order: [[ 'createdAt', 'ASC' ]],
+            order: [
+                [ 'hour', 'ASC' ],
+                [ 'task_number', 'ASC']
+            ],
             distinct: true
         });
         const totalPages = Math.ceil(count/limit);
@@ -138,10 +141,18 @@ const queryTasksForSpecialist = async(queryOptions) => {
     try {
         const { page, limit, searchTerm } = queryOptions;
         const offset = (page - 1) * limit;
-        const startOfDay = new Date();
+
+        // ✅ Lấy giờ theo timezone VN
+        const todayStr = new Date().toLocaleString('en-US', {
+            timeZone: 'Asia/Ho_Chi_Minh'
+        });
+        const date = new Date(todayStr);
+
+        // ✅ Tính start & end của hôm nay
+        const startOfDay = new Date(date);
         startOfDay.setHours(0, 0, 0, 0);
 
-        const endOfDay = new Date();
+        const endOfDay = new Date(date);
         endOfDay.setHours(23, 59, 59, 999);
         
         const whereClause = {
@@ -415,7 +426,7 @@ const rolloverOrRecreateTasksForToday = async(targetDateString) => {
 
             const newTaskDataDefaults = {
                 name: preTask.name,
-                taskNumber: preTask.task_number, // Tạm thời giữ nguyên số thứ tự, sau khi tạo sẽ update lại nếu có task nào trong ngày mới
+                task_number: preTask.task_number, // Tạm thời giữ nguyên số thứ tự, sau khi tạo sẽ update lại nếu có task nào trong ngày mới
                 time: preTask.time,
                 hour: nextDayHour, // Giữ nguyên giờ và đổi ngày
                 frequency: preTask.frequency,
@@ -506,6 +517,57 @@ const deleteTask = async(id) => {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra khi xóa: " + error.message)
     }
 }
+
+// lấy tổng công việc, công việc ngày hôm nay, tổng nhân sự (chuyên viên + nhân viên đang hoạt động)
+const getTotalTaskAndStaff = async() => {
+    try {
+        // ✅ Lấy giờ theo timezone VN
+        const todayStr = new Date().toLocaleString('en-US', {
+            timeZone: 'Asia/Ho_Chi_Minh'
+        });
+        const date = new Date(todayStr);
+
+        // ✅ Tính start & end của hôm nay
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+
+        // Chạy song song
+        const [totalTask, todayTask, totalStaff] = await Promise.all([
+            // Tổng task,
+            Task.count(),
+
+            // Task hôm nay
+            Task.count({
+                where: {
+                    due_date: {
+                        [Op.between]: [startOfDay, endOfDay]
+                    }
+                }
+            }),
+
+            // Tổng nhân sự
+            User.count({
+                where: {
+                    role: {
+                        [Op.in]: ['specialist', 'employee']
+                    },
+                    is_actived: 1
+                }
+            })
+        ]);
+        
+        return {
+            totalTask,
+            todayTask,
+            totalStaff
+        }
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra khi lấy danh sách: " + error.message)
+    }
+}
 module.exports = {
     createTask,
     queryTasks,
@@ -515,5 +577,6 @@ module.exports = {
     rolloverOrRecreateTasksForToday,
     deleteOldTasks,
     queryTasksForSpecialist,
-    deleteTask
+    deleteTask, 
+    getTotalTaskAndStaff
 }

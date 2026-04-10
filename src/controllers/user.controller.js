@@ -18,6 +18,13 @@ const getListAccounts = catchAsync(async(req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Lấy danh sách tài khoản thành công.', data: users})
 })
 
+// Lấy danh sách tất cả tài khoản
+const getAccounts = catchAsync(async(req, res) => {
+    const queryOptions = pick(req.query, ['page', 'limit', 'searchTerm']);
+    const users = await userService.queryListAccounts(queryOptions);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Lấy danh sách tài khoản thành công.', data: users})
+})
+
 // Lấy chi tiết tài khoản
 const getAccount = catchAsync(async(req, res) => {
     const user = await userService.getAccount(req.params.id);
@@ -48,5 +55,6 @@ module.exports = {
     getAccount,
     updateProfile,
     deactivateAccount,
-    activateAccount
+    activateAccount,
+    getAccounts
 }

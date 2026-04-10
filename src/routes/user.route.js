@@ -41,6 +41,13 @@ router.get(
     userController.getListAccounts
 )
 
+// Lấy danh sách tất cả tài khoản
+router.get(
+    '/user-accounts',
+    validate(baseValidation.queryOptions),
+    userController.getAccounts
+)
+
 // Vô hiệu hóa tài khoản
 router.patch(
     '/user-account-disabled/:id',

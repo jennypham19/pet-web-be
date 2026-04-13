@@ -10,15 +10,15 @@ module.exports = (sequelize, DataTypes) => {
                 foreignKey: 'pet_id',
                 as: 'petHealth'
             }),
-            Pet.hasOne(models.Vaccination, {
+            Pet.hasMany(models.Vaccination, {
                 foreignKey: 'pet_id',
                 as: 'petVaccination'
             }),
-            Pet.hasOne(models.Deworming, {
+            Pet.hasMany(models.Deworming, {
                 foreignKey: 'pet_id',
                 as: 'petDeworming'
             }),
-            Pet.hasOne(models.RegularVetCheckup, {
+            Pet.hasMany(models.RegularVetCheckup, {
                 foreignKey: 'pet_id',
                 as: 'petRegularVetCheckup'
             }),

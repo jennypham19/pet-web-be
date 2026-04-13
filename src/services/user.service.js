@@ -106,7 +106,10 @@ const queryAccounts = async(queryOptions) => {
 const queryListAccounts = async(queryOptions) => {
     try {
         const { page, limit, searchTerm } = queryOptions;
-        const offset = (page - 1) * limit;
+        const pageNumber = Number(page) || 1;
+        const pageSize = Number(limit) || 10;
+        const offset = (pageNumber - 1) * pageSize;
+        
         const whereClause = { };
         if(searchTerm){
             whereClause[Op.or] = [
@@ -136,7 +139,7 @@ const queryListAccounts = async(queryOptions) => {
                 role: newAccount.role,
                 gender: newAccount.gender ? newAccount.gender : null,
                 position: newAccount.position ? newAccount.position : null,
-                title: newAccount.title ? newAccount : null,
+                title: newAccount.title ? newAccount.title : null,
                 dob: newAccount.dob ? newAccount.dob : null,
                 cccd: newAccount.cccd ? newAccount.cccd : null,
                 email: newAccount.email ? newAccount.email : null,
@@ -156,7 +159,8 @@ const queryListAccounts = async(queryOptions) => {
             data: accounts,
             totalPages,
             currentPage: page,
-            total: count
+            total: count,
+            limit: pageSize
         }
     } catch (error) {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)

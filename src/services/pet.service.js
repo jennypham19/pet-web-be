@@ -166,42 +166,57 @@ const queryPet= async(id) => {
             updatedAt: newPet.updatedAt,
             nameAvatar: newPet.name_avatar,
             urlAvatar: newPet.url_avatar,
-            petHealth: newPet.petHealth ? {
+            petHealth: newPet.petHealth && !isEmptyObject(newPet.petHealth) ? {
                 id: newPet.petHealth.id,
-                clinicName: newPet.petHealth.clinic_name,
-                address: newPet.petHealth.address,
-                phone: newPet.petHealth.phone,
-                attendingVet: newPet.petHealth.attending_vet,
+                clinicName: newPet.petHealth.clinic_name ? newPet.petHealth.clinic_name : null,
+                address: newPet.petHealth.address ? newPet.petHealth.address : null,
+                phone: newPet.petHealth.phone ? newPet.petHealth.phone :  null,
+                attendingVet: newPet.petHealth.attending_vet ? newPet.petHealth.attending_vet : null,
                 createdAt: newPet.petHealth.createdAt,
                 updatedAt: newPet.petHealth.updatedAt
             } : null,
-            petVaccination: newPet.petVaccination ? {
-                id: newPet.petVaccination.id,
-                medicationName: newPet.petVaccination.medication_name,
-                firstDoseDate: newPet.petVaccination.first_dose_date,
-                boosterDate: newPet.petVaccination.booster_date,
-                adverseReaction: newPet.petVaccination.adverse_reaction,
-                createdAt: newPet.petVaccination.createdAt,
-                updatedAt: newPet.petVaccination.updatedAt
-            } : null,
-            petDeworming: newPet.petDeworming ? {
-                id: newPet.petDeworming.id,
-                medicationName: newPet.petDeworming.medication_name,
-                dosage: newPet.petDeworming.dosage,
-                dewormingDate: newPet.petDeworming.deworming_date,
-                nextDewormingDate: newPet.petDeworming.next_deworming_date,
-                createdAt: newPet.petDeworming.createdAt,
-                updatedAt: newPet.petDeworming.updatedAt
-            } : null,
-            petRegularVetCheckup: newPet.petRegularVetCheckup && !isEmptyObject(newPet.petRegularVetCheckup) ? {
-                id: newPet.petRegularVetCheckup.id,
-                examinationDate: newPet.petRegularVetCheckup.examination_date,
-                recheckDate: newPet.petRegularVetCheckup.recheck_date,
-                healthCondition: newPet.petRegularVetCheckup.health_condition,
-                conclusion: newPet.petRegularVetCheckup.conclusion,
-                createdAt: newPet.petRegularVetCheckup.createdAt,
-                updatedAt: newPet.petRegularVetCheckup.updatedAt
-            } : null,
+            petVaccination: newPet.petVaccination ? newPet.petVaccination.map((vac) => {
+                return {
+                    id: vac.id,
+                    medicationName: vac.medication_name,
+                    firstDoseDate: vac.first_dose_date,
+                    boosterDate: vac.booster_date,
+                    adverseReaction: vac.adverse_reaction,
+                    createdAt: vac.createdAt,
+                    updatedAt: vac.updatedAt
+                }
+            }) : [],
+            petDeworming: newPet.petDeworming ? newPet.petDeworming.map((dew) => {
+                return {
+                    id: dew.id,
+                    medicationName: dew.medication_name,
+                    dosage: dew.dosage,
+                    dewormingDate: dew.deworming_date,
+                    nextDewormingDate: dew.next_deworming_date,
+                    createdAt: dew.createdAt,
+                    updatedAt: dew.updatedAt
+                }
+            }) : [],
+            petRegularVetCheckup: (newPet.petRegularVetCheckup ?? []).map((checkUp) => {
+                    return {
+                        id: checkUp.id,
+                        examinationDate: checkUp.examination_date,
+                        recheckDate: checkUp.recheck_date,
+                        healthCondition: checkUp.health_condition,
+                        conclusion: checkUp.conclusion,
+                        createdAt: checkUp.createdAt,
+                        updatedAt: checkUp.updatedAt
+                }
+            }),
+            // petRegularVetCheckup: newPet.petRegularVetCheckup && !isEmptyObject(newPet.petRegularVetCheckup) ? {
+            //     id: newPet.petRegularVetCheckup.id,
+            //     examinationDate: newPet.petRegularVetCheckup.examination_date,
+            //     recheckDate: newPet.petRegularVetCheckup.recheck_date,
+            //     healthCondition: newPet.petRegularVetCheckup.health_condition,
+            //     conclusion: newPet.petRegularVetCheckup.conclusion,
+            //     createdAt: newPet.petRegularVetCheckup.createdAt,
+            //     updatedAt: newPet.petRegularVetCheckup.updatedAt
+            // } : null,
             petSpecialNutritionalPlan: newPet.petSpecialNutritionalPlan &&  !isEmptyObject(newPet.petSpecialNutritionalPlan) ? {
                 id: newPet.petSpecialNutritionalPlan.id,
                 food: newPet.petSpecialNutritionalPlan.food,

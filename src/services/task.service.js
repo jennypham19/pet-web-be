@@ -422,7 +422,11 @@ const rolloverOrRecreateTasksForToday = async(targetDateString) => {
             const nextDayHour = hourDate.plus({ days: 1 });
 
             // ✅ due_date cuối ngày VN
-            const dueDate = nextDayHour.endOf('day');
+            // const dueDate = nextDayHour.endOf('day');
+            const startOfNewDay = nextDayHour.startOf('day').toJSDate();
+            const endOfNewDay = nextDayHour.endOf('day').toJSDate();
+
+            const dueDate = nextDayHour.endOf('day').toJSDate();
 
             const newTaskDataDefaults = {
                 name: preTask.name,
@@ -442,7 +446,11 @@ const rolloverOrRecreateTasksForToday = async(targetDateString) => {
             const existed = await Task.findOne({
                 where: {
                     name: newTaskDataDefaults.name,
-                    due_date: newTaskDataDefaults.due_date
+                    task_number: newTaskDataDefaults.task_number,
+                    created_by: newTaskDataDefaults.created_by,
+                    due_date: {
+                        [Op.between]: [startOfNewDay, endOfNewDay]
+                    }
                 },
                 transaction
             });

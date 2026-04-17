@@ -291,10 +291,181 @@ const updatePetImage = async(imagePetBody) => {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
     }
 }
+
+// Lấy danh sách lịch tiêm phòng
+const getVaccinations = async(queryOptions) => {
+    try {
+        const { id, page, limit, searchTerm } = queryOptions;
+        const offset = (page - 1) * limit;
+        const whereClause = { pet_id: id };
+        if(searchTerm){
+            whereClause.medication_name =  { [Op.iLike]: `%${searchTerm}%` }
+        }
+        const { count, rows: vacsDB } = await Vaccination.findAndCountAll({
+            where: whereClause,
+            limit,
+            offset,
+            order: [[ 'createdAt', 'DESC' ]]
+        });
+        const totalPages = Math.ceil(count/limit);
+        const vacs = vacsDB.map((vac) => {
+            const newVac = vac.toJSON();
+            return {
+                id: newVac.id,
+                medicationName: newVac.medication_name,
+                firstDoseDate: newVac.first_dose_date,
+                boosterDate: newVac.boosterDate,
+                createdAt: newVac.createdAt,
+                updatedAt: newVac.updatedAt,
+            }
+        })
+        return {
+            data: vacs,
+            totalPages,
+            currentPage: page,
+            total: count
+        }
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
+
+// Lấy danh sách lịch tẩy giun
+const getDewormings = async(queryOptions) => {
+    try {
+        const { id, page, limit, searchTerm } = queryOptions;
+        const offset = (page - 1) * limit;
+        const whereClause = { pet_id: id };
+        if(searchTerm){
+            whereClause.medication_name =  { [Op.iLike]: `%${searchTerm}%` }
+        }
+        const { count, rows: dewsDB } = await Deworming.findAndCountAll({
+            where: whereClause,
+            limit,
+            offset,
+            order: [[ 'createdAt', 'DESC' ]]
+        });
+        const totalPages = Math.ceil(count/limit);
+        const dews = dewsDB.map((dew) => {
+            const newDew = dew.toJSON();
+            return {
+                id: newDew.id,
+                medicationName: newDew.medication_name,
+                dosage: newDew.dosage,
+                dewormingDate: newDew.deworming_date,
+                nextDewormingDate: newDew.next_deworming_date,
+                createdAt: newDew.createdAt,
+                updatedAt: newDew.updatedAt,
+            }
+        })
+        return {
+            data: dews,
+            totalPages,
+            currentPage: page,
+            total: count
+        }
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
+// Lấy danh sách lịch khám định kỳ
+const getRegularVetCheckups = async(queryOptions) => {
+    try {
+        const { id, page, limit, searchTerm } = queryOptions;
+        const offset = (page - 1) * limit;
+        const whereClause = { pet_id: id };
+        if(searchTerm){
+            whereClause.health_condition =  { [Op.iLike]: `%${searchTerm}%` }
+        }
+        const { count, rows: checkUpsDB } = await RegularVetCheckup.findAndCountAll({
+            where: whereClause,
+            limit,
+            offset,
+            order: [[ 'createdAt', 'DESC' ]]
+        });
+        const totalPages = Math.ceil(count/limit);
+        const checkUps = checkUpsDB.map((checkUp) => {
+            const newcheckUp = checkUp.toJSON();
+            return {
+                id: newcheckUp.id,
+                examinationDate: newcheckUp.examination_date,
+                recheckDate: newcheckUp.recheck_date,
+                healthCondition: newcheckUp.health_condition,
+                conclusion: newcheckUp.conclusion,
+                createdAt: newcheckUp.createdAt,
+                updatedAt: newcheckUp.updatedAt,
+            }
+        })
+        return {
+            data: checkUps,
+            totalPages,
+            currentPage: page,
+            total: count
+        }
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
+
+// Thêm lịch tiêm phòng
+const addPetVaccination = async(vacBody) => {
+    try {
+        const { idPet, medicationName, firstDoseDate, boosterDate, adverseReaction } = vacBody;
+        await Vaccination.create({
+            pet_id: idPet,
+            medication_name: medicationName,
+            first_dose_date: firstDoseDate,
+            booster_date: boosterDate,
+            adverse_reaction: adverseReaction
+        })
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
+
+// Thêm lịch tẩy giun
+const addPetDeworming = async(dewBody) => {
+    try {
+        const { idPet, medicationName, dosage, dewormingDate, nextDewormingDate } = dewBody;
+        await Deworming.create({
+            pet_id: idPet,
+            medication_name: medicationName,
+            dosage: dosage,
+            deworming_date: dewormingDate,
+            next_deworming_date: nextDewormingDate
+        })
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
+
+// Thêm khám định kỳ
+const addPetRegularVetCheckup = async(checkupBody) => {
+    try {
+        const { idPet, examinationDate, recheckDate, healthCondition, conclusion } = checkupBody;
+        await RegularVetCheckup.create({
+            pet_id: idPet,
+            examination_date: examinationDate,
+            recheck_date: recheckDate,
+            health_condition: healthCondition,
+            conclusion: conclusion
+        })
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
+
+
 module.exports = {
     createPet,
     queryListPetImages,
     queryListPets,
     queryPet,
-    updatePetImage
+    updatePetImage,
+    addPetVaccination,
+    getVaccinations,
+    getDewormings,
+    getRegularVetCheckups,
+    addPetDeworming,
+    addPetRegularVetCheckup
 }

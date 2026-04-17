@@ -46,4 +46,46 @@ router.post(
     petController.updatePetImage
 )
 
+// Lấy danh sách lịch tiêm phòng
+router.get(
+    '/vaccinations-pet',
+    validate(petValidation.petInfoQuery),
+    petController.getVaccinations
+)
+
+// Lấy danh sách lịch tẩy giun
+router.get(
+    '/dewormings-pet',
+    validate(petValidation.petInfoQuery),
+    petController.getDewormings
+)
+
+// Lấy danh sách lịch khám định kỳ
+router.get(
+    '/regular-vet-checkups-pet',
+    validate(petValidation.petInfoQuery),
+    petController.getRegularVetCheckups
+)
+
+// Thêm lịch tiêm phòng
+router.post(
+    '/pet-vaccination-add',
+    validate(petValidation.addVaccinationPet),
+    petController.addVaccination
+)
+
+// Thêm lịch tẩy giun
+router.post(
+    '/pet-deworming-add',
+    validate(petValidation.addDewormingPet),
+    petController.addDeworming
+)
+
+// Thêm hồ sơ khám định kỳ thành công
+router.post(
+    '/pet-regular-vet-checkup-add',
+    validate(petValidation.addRegularVetCheckupPet),
+    petController.addRegularVetCheckup
+)
+
 module.exports = router;

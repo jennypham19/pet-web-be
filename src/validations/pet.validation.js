@@ -56,7 +56,50 @@ const uploadPetImage = {
     })
 }
 
+const petInfoQuery = {
+    query: Joi.object().keys({
+        id: Joi.string().required(),
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(10),
+        searchTerm: Joi.string().optional()
+    })
+}
+
+const addVaccinationPet = {
+    body: Joi.object().keys({
+        idPet: Joi.string().required(),
+        medicationName: Joi.string().required(),
+        firstDoseDate: Joi.string().required(),
+        boosterDate: Joi.string().required(),
+        adverseReaction: Joi.string().required()
+    })
+}
+
+const addDewormingPet = {
+    body: Joi.object().keys({
+        idPet: Joi.string().required(),
+        medicationName: Joi.string().required(),
+        dosage: Joi.string().required(),
+        dewormingDate: Joi.string().required(),
+        nextDewormingDate: Joi.string().required()
+    })
+}
+
+const addRegularVetCheckupPet = {
+    body: Joi.object().keys({
+        idPet: Joi.string().required(),
+        examinationDate: Joi.string().required(),
+        recheckDate: Joi.string().required(),
+        healthCondition: Joi.string().required(),
+        conclusion: Joi.string().required()
+    })
+}
+
 module.exports = {
     createPet,
-    uploadPetImage
+    uploadPetImage,
+    addVaccinationPet,
+    petInfoQuery,
+    addDewormingPet,
+    addRegularVetCheckupPet
 }

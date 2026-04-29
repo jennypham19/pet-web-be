@@ -137,15 +137,115 @@ const queryTasks = async(queryOptions) => {
 }
 
 // Lấy ra danh sách công việc cho chuyên viên
+// const queryTasksForSpecialist = async(queryOptions) => {
+//     try {
+//         const { page, limit, searchTerm } = queryOptions;
+//         const offset = (page - 1) * limit;
+
+//         // ✅ Lấy giờ theo timezone VN
+//         const todayStr = new Date().toLocaleString('en-US', {
+//             timeZone: 'Asia/Ho_Chi_Minh'
+//         });
+//         const date = new Date(todayStr);
+
+//         // ✅ Tính start & end của hôm nay
+//         const startOfDay = new Date(date);
+//         startOfDay.setHours(0, 0, 0, 0);
+
+//         const endOfDay = new Date(date);
+//         endOfDay.setHours(23, 59, 59, 999);
+        
+//         const whereClause = {
+//             due_date: {
+//                 [Op.between]: [startOfDay, endOfDay]
+//             }
+//         };
+//         if(searchTerm){
+//             whereClause.name =  { [Op.iLike]: `%${searchTerm}%` }
+//         };
+//         const { count, rows: tasksDB } = await Task.findAndCountAll({
+//             where: whereClause,
+//             include: [
+//                 {
+//                     model: TaskPet,
+//                     as: 'task',
+//                     include: [{
+//                         model: Pet,
+//                         as: 'petsTask'
+//                     }]
+//                 },
+//                 {
+//                     model: User,
+//                     as: 'createdBy'
+//                 }
+//             ],  
+//             limit,
+//             offset,
+//             order: [[ 'createdAt', 'ASC' ]],
+//             distinct: true
+//         });
+//         const totalPages = Math.ceil(count/limit);
+//         const tasks = tasksDB.map((task) => {
+//             const newTask = task.toJSON();
+//             return{
+//                 id: newTask.id,
+//                 name: newTask.name,
+//                 taskNumber: newTask.task_number,
+//                 displayName: `${newTask.task_number}. ${newTask.name}`,
+//                 time: newTask.time,
+//                 hour: newTask.hour,
+//                 frequency: newTask.frequency,
+//                 otherFrequency: newTask.other_frequency ? newTask.other_frequency : null,
+//                 requiredNote: newTask.required_note,
+//                 manager: {
+//                     name: newTask.createdBy.name,
+//                     role: newTask.createdBy.role,
+//                     phone: newTask.createdBy.phone
+//                 },
+//                 status: newTask.status,
+//                 isUpdatedImage: newTask.is_updated_image,
+//                 finishedDate: newTask.finished_date,
+//                 dueDate: newTask.due_date,
+//                 pets: (newTask.task ?? [])
+//                     .map((el) => {
+//                         const pet = el.petsTask;
+//                         return {
+//                             name: pet.name,
+//                             sex: pet.sex,
+//                             urlAvatar: pet.url_avatar
+//                         }
+//                     })
+//             }
+//         })
+//         return {
+//             data: tasks,
+//             totalPages,
+//             currentPage: page,
+//             total: count
+//         }
+//     } catch (error) {
+//         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+//     }
+// }
+
 const queryTasksForSpecialist = async(queryOptions) => {
     try {
-        const { page, limit, searchTerm } = queryOptions;
+        const { page, limit, selectedDate } = queryOptions;
         const offset = (page - 1) * limit;
 
+        // ==================================================
+        // Nếu FE gửi ngày chọn -> dùng ngày đó
+        // Không gửi -> lấy ngày hiện tại
+        // ==================================================
+        const rawDate = selectedDate
+            ? new Date(selectedDate)
+            : new Date();
+
         // ✅ Lấy giờ theo timezone VN
-        const todayStr = new Date().toLocaleString('en-US', {
+        const todayStr = rawDate.toLocaleString('en-US', {
             timeZone: 'Asia/Ho_Chi_Minh'
         });
+
         const date = new Date(todayStr);
 
         // ✅ Tính start & end của hôm nay
@@ -159,9 +259,6 @@ const queryTasksForSpecialist = async(queryOptions) => {
             due_date: {
                 [Op.between]: [startOfDay, endOfDay]
             }
-        };
-        if(searchTerm){
-            whereClause.name =  { [Op.iLike]: `%${searchTerm}%` }
         };
         const { count, rows: tasksDB } = await Task.findAndCountAll({
             where: whereClause,
@@ -576,6 +673,114 @@ const getTotalTaskAndStaff = async() => {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra khi lấy danh sách: " + error.message)
     }
 }
+
+// Lấy danh sách hình ảnh công việc
+const queryListImages = async() => {
+    try {
+        const { rows: imagesTaskDB } = await Task.findAndCountAll({
+            include: [
+                {
+                    model: TaskImage,
+                    as: 'taskImages',
+                },
+            ],  
+            order: [[ 'createdAt', 'ASC' ]],
+            distinct: true  
+        })
+
+        const groupedData = {};
+
+        imagesTaskDB.forEach((item) => {
+            const data = item.toJSON();
+            const dueDate = data.due_date;
+
+            // Nếu chưa có dueDate thì khởi tạo
+            if (!groupedData[dueDate]) {
+                groupedData[dueDate] = {
+                    dueDate: dueDate,
+                    images: []
+                };
+            }
+
+            // Nếu có ảnh thì push vào
+            if (Array.isArray(data.taskImages) && data.taskImages.length > 0) {
+                data.taskImages.forEach((image) => {
+                    groupedData[dueDate].images.push({
+                        id: image.id,
+                        nameImage: image.name_image,
+                        urlImage: image.url_image
+                    });
+                });
+            }
+        });
+
+        return Object.values(groupedData);
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra khi lấy danh sách: " + error.message)        
+    }
+}
+
+// Lấy dạnh sách hình ảnh khi click ngày
+const queryListImagesByDate = async(queryOption) => {
+    try {
+        const { date } = queryOption
+        const rawDate = new Date(date)
+
+        // ✅ Lấy giờ theo timezone VN
+        const todayStr = rawDate.toLocaleString('en-US', {
+            timeZone: 'Asia/Ho_Chi_Minh'
+        });
+
+        const dateSelected = new Date(todayStr);
+
+        // ✅ Tính start & end của hôm nay
+        const startOfDay = new Date(dateSelected);
+        startOfDay.setHours(0, 0, 0, 0);
+
+        const endOfDay = new Date(dateSelected);
+        endOfDay.setHours(23, 59, 59, 999);
+        
+        const whereClause = {
+            due_date: {
+                [Op.between]: [startOfDay, endOfDay]
+            }
+        };
+        const imagesTaskByDateDB = await Task.findAll({
+            where: whereClause,
+            include: [
+                {
+                    model: TaskImage,
+                    as: 'taskImages',
+                },
+            ],
+            order: [[ 'createdAt', 'ASC' ]],
+            distinct: true
+        });
+
+        const result = {
+            dueDate: endOfDay,
+            images: []
+        };
+
+        imagesTaskByDateDB.forEach((item) => {
+            const data = item.toJSON();
+            // Nếu có ảnh thì push vào
+            if (Array.isArray(data.taskImages) && data.taskImages.length > 0) {
+                data.taskImages.forEach((image) => {
+                    result.images.push({
+                        id: image.id,
+                        nameImage: image.name_image,
+                        urlImage: image.url_image
+                    });
+                });
+            }
+        });
+
+        return result;
+    } catch (error) {
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
+    }
+}
 module.exports = {
     createTask,
     queryTasks,
@@ -586,5 +791,7 @@ module.exports = {
     deleteOldTasks,
     queryTasksForSpecialist,
     deleteTask, 
-    getTotalTaskAndStaff
+    getTotalTaskAndStaff,
+    queryListImages,
+    queryListImagesByDate
 }

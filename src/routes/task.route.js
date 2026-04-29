@@ -28,7 +28,7 @@ router.get(
 // Lấy danh sách công việc cho chuyên viên
 router.get(
     '/list-tasks-for-specialist',
-    validate(baseValidation.queryOptions),
+    validate(taskValidation.queryTasksForSpecialist),
     taskController.getListTasksForSpecialist
 )
 
@@ -64,6 +64,19 @@ router.delete(
 router.get(
     '/total-task-and-staff',
     taskController.getTotalTaskAndStaff
+)
+
+// Lấy danh sách hình ảnh công việc
+router.get(
+    '/list-images-task',
+    taskController.getListImages
+)
+
+// Lấy dạnh sách hình ảnh khi click ngày
+router.get(
+    '/list-images-task-by-date',
+    validate(taskValidation.getListImagesByDate),
+    taskController.getListImagesByDate
 )
 
 module.exports = router;

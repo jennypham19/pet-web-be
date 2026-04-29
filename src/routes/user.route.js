@@ -25,6 +25,13 @@ router.put(
     userController.updateProfile
 )
 
+// Thay đổi mật khẩu
+router.put(
+    '/account-password-changed/:id',
+    validate(userValidation.changePassword),
+    userController.changePassword
+)
+
 router.use(protect, authorize('admin'));
 
 // tạo tài khoản nhân sự
@@ -59,6 +66,20 @@ router.patch(
     '/user-account-activated/:id',
     validate(baseValidation.queryOption),
     userController.activateAccount
+)
+
+// Thay đổi vai trò
+router.patch(
+    '/account-role-changed/:id',
+    validate(userValidation.changeRole),
+    userController.changeRole
+)
+
+// Reset mật khẩu
+router.patch(
+    '/user-password-reset/:id',
+    validate(baseValidation.queryOption),
+    userController.resetPassword
 )
 
 module.exports = router;

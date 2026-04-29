@@ -21,11 +21,19 @@ const login = async(account, password) => {
             throw new ApiError(StatusCodes.NOT_FOUND, 'Tài khoản không chính xác');
         }
         if(!(await bcrypt.compare(password, userDB.password))) {
-            throw new ApiError(StatusCodes.NOT_FOUND, 'Mật khẩu không chính xác');
+            throw new ApiError(StatusCodes.BAD_REQUEST, 'Mật khẩu không chính xác');
         }
         if(userDB.is_active === -1) {
             throw new ApiError(StatusCodes.FORBIDDEN, 'Tài khoản đã bị vô hiệu hóa. Vui lòng liên hệ quản trị viên');
         }
+
+        // if(userDB.is_default_type === -1){
+        //     throw new ApiError(StatusCodes.BAD_REQUEST, "Mật khẩu của bạn đã bị thay đổi. Vui lòng liên hệ quản trị viên để lấy mật khẩu hoặc đặt lại mật khẩu mới")
+        // }
+
+        // if(!!userDB.is_reset){
+        //     throw new ApiError(StatusCodes.BAD_REQUEST, "Mật khẩu của bạn đã bị reset. Vui lòng liên hệ quản trị viên để lấy mật khẩu hoặc đặt lại mật khẩu mới")
+        // }
 
         const newUser = userDB.toJSON();
         const user = {

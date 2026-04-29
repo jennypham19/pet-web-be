@@ -35,8 +35,24 @@ const updateImagesForTask = {
         images: Joi.array().required()
     })
 }
+
+const queryTasksForSpecialist = {
+    query: Joi.object().keys({
+        page: Joi.number().integer().min(1).default(1),
+        limit: Joi.number().integer().min(1).max(100).default(10),
+        selectedDate: Joi.string().optional(),
+    })
+}
+
+const getListImagesByDate = {
+    query: Joi.object().keys({
+        date: Joi.string().required()
+    })
+}
 module.exports = {
     createTask,
     updateStatus,
-    updateImagesForTask
+    updateImagesForTask,
+    queryTasksForSpecialist,
+    getListImagesByDate
 }

@@ -6,19 +6,22 @@ const ApiError = require('../utils/ApiError');
 
 // eslint-disable-next-line no-unused-vars
 const errorHandler = (err, req, res, next) => {
-  let { statusCode, message } = err;
+  let { statusCode, message, type } = err;
 
   if (!(err instanceof ApiError)) { // Nếu không phải lỗi ApiError đã định nghĩa
     statusCode = statusCode || StatusCodes.INTERNAL_SERVER_ERROR;
     message = message || 'Internal Server Error';
+    type = type || 'error'
     // Tạo một ApiError mới để log và response nhất quán
     // Không nên expose lỗi hệ thống chi tiết ra client ở production
-    err = new ApiError(statusCode, message, false, config.env === 'development' ? err.stack : undefined);
+    err = new ApiError(statusCode, message, type, false, config.env === 'development' ? err.stack : undefined);
   }
 
   const response = {
     success: false,
     message: err.message,
+    statusCode: err.statusCode,
+    type: err.type,
     ...(config.env === 'development' && { stack: err.stack }),
   };
 

@@ -4,6 +4,7 @@ const { StatusCodes } = require('http-status-codes');
 const ApiError = require('../utils/ApiError');
 const bcrypt = require('bcryptjs');
 const { Op } = require('sequelize');
+const crypto = require('crypto')
 
 // Lấy chi tiết user theo id
 const getUserById = async(id) => {
@@ -263,6 +264,64 @@ const deactivateAccount = async(id) => {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra khi vô hiệu hóa tài khoản: " + error.message)
     }
 }
+
+// thay đổi mật khẩu 
+const changePassword = async(id, passwordBody) => {
+    try {
+        const { password, currentPassword } = passwordBody;
+        const accountDB = await getUserById(id);
+        if(!(await bcrypt.compare(currentPassword, accountDB.password))){
+            throw new ApiError(StatusCodes.BAD_REQUEST, 'Mật khẩu hiện tại không chính xác');
+        }
+        // Hash bằng bcrypt
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        // update DB
+        await accountDB.update({
+            password: hashedPassword,
+            is_default_type: -1
+        });
+    } catch (error) {
+        if(error instanceof ApiError) throw error;
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra khi đổi mật khẩu: " + error.message)
+    }
+}
+
+// thay đổi role
+const changeRoleAccount = async(id, roleBody) => {
+    try {
+        const accountDB = await getUserById(id);
+        // update role
+        await accountDB.update({
+            role: roleBody.role,
+        })
+    } catch (error) {
+        if(error instanceof ApiError) throw error;
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra khi thay đổi vai trò: " + error.message)
+    }
+}
+
+// Reset mật khẩu
+const resetPasswordAccount = async(id) => {
+  const user = await getUserById(id);
+
+  // Tự sinh password ngẫu nhiên dài 6 ký tự
+  const plainPassword = crypto.randomBytes(6).toString('base64').slice(0,6);
+
+  // Hash bằng bcrypt
+  const hashedPassword = await bcrypt.hash(plainPassword, 10);
+  await user.update({ password: hashedPassword, is_reset: true });
+
+  user.password = undefined; // Không trả về password
+  const newUser = user.toJSON();
+  const userReturn = {
+    name: newUser.name,
+    account: newUser.account,
+    password: plainPassword
+  }
+
+  return userReturn;
+}
 module.exports = {
     createAccount,
     queryAccounts,
@@ -270,5 +329,8 @@ module.exports = {
     updateProfile,
     activateAccount,
     deactivateAccount,
-    queryListAccounts
+    queryListAccounts,
+    changePassword,
+    changeRoleAccount,
+    resetPasswordAccount
 }

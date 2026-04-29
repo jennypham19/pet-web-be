@@ -40,7 +40,27 @@ const updateProfile = {
     })
 }
 
+const changePassword = {
+    params: Joi.object().keys({
+        id: Joi.string().required()
+    }),
+    body: Joi.object().keys({
+        currentPassword: Joi.string().required(),
+        password: Joi.string().required()
+    })
+}
+
+const changeRole = {
+    params: Joi.object().keys({
+        id: Joi.string().required()
+    }),
+    body: Joi.object().keys({
+        role: Joi.string().required(),
+    })
+}
 module.exports = {
     createAccount,
-    updateProfile
+    updateProfile,
+    changePassword,
+    changeRole
 }

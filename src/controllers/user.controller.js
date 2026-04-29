@@ -49,6 +49,24 @@ const activateAccount = catchAsync(async(req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Kích hoạt tài khoản thành công.' })
 })
 
+// thay đổi mật khẩu
+const changePassword = catchAsync(async(req, res) => {
+    await userService.changePassword(req.params.id, req.body);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Thay đổi mật khẩu thành công'})
+})
+
+// thay đổi vai trò
+const changeRole = catchAsync(async(req, res) => {
+    await userService.changeRoleAccount(req.params.id, req.body);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Thay đổi vai trò thành công'})
+})
+
+// reset mật khẩu
+const resetPassword = catchAsync(async(req, res) => {
+    const user = await userService.resetPasswordAccount(req.params.id);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Reset mật khẩu thành công', data: user})
+})
+
 module.exports = {
     createAccount,
     getListAccounts,
@@ -56,5 +74,8 @@ module.exports = {
     updateProfile,
     deactivateAccount,
     activateAccount,
-    getAccounts
+    getAccounts,
+    changePassword,
+    changeRole,
+    resetPassword
 }

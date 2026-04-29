@@ -19,7 +19,7 @@ const getListTasks = catchAsync(async(req, res) => {
 
 // Lấy danh sách công việc cho chuyên viên
 const getListTasksForSpecialist = catchAsync(async(req, res) => {
-    const queryOptions = pick(req.query, ['page', 'limit', 'searchTerm']);
+    const queryOptions = pick(req.query, ['page', 'limit', 'selectedDate']);
     const tasks = await taskService.queryTasksForSpecialist(queryOptions);
     res.status(StatusCodes.OK).send({ success: true, message: 'Lấy danh sách thành công', data: tasks})
 })
@@ -67,6 +67,19 @@ const getTotalTaskAndStaff = catchAsync(async(req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Lấy total thành công.', data: total })
 })
 
+// Lấy danh sách hình ảnh công việc
+const getListImages = catchAsync(async(req, res) => {
+    const images = await taskService.queryListImages();
+    res.status(StatusCodes.OK).send({ success: true, message: 'Lấy danh sách hình ảnh công việc thành công', data: images})
+})
+
+// Lấy dạnh sách hình ảnh khi click ngày
+const getListImagesByDate = catchAsync(async(req, res) => {
+    const queryOption = pick(req.query, ['date'])
+    const imagesByDate = await taskService.queryListImagesByDate(queryOption);
+    res.status(StatusCodes.OK).send({ success: true, message: 'Lấy danh sách hình ảnh công việc thành công', data: imagesByDate})
+})
+
 module.exports = {
     createTask,
     getListTasks,
@@ -77,5 +90,7 @@ module.exports = {
     runDeleteOldTasksController,
     getListTasksForSpecialist,
     deleteTask,
-    getTotalTaskAndStaff
+    getTotalTaskAndStaff,
+    getListImages,
+    getListImagesByDate
 }

@@ -478,7 +478,7 @@ const rolloverOrRecreateTasksForToday = async(targetDateString) => {
         const endOfDay = previousDate.endOf('day').toJSDate();
 
         // Lấy Tasks + id Pet của ngày hôm qua
-        const tasksFromPreviousDay = await Task.findAll({
+        let tasksFromPreviousDay = await Task.findAll({
             where: {
                 due_date: {
                     [Op.between]: [startOfDay, endOfDay]
@@ -488,8 +488,38 @@ const rolloverOrRecreateTasksForToday = async(targetDateString) => {
             transaction
         });
 
+        // ✅ Nếu ngày hôm qua không có task nào, lùi về tìm ngày gần nhất trước đó có task
+        // để lấy toàn bộ công việc của ngày đó làm mẫu lặp lại cho hôm nay
         if(!tasksFromPreviousDay || tasksFromPreviousDay.length === 0){
-            // Xử lý trường hợp không có công việc nào từ ngày hôm qua
+            const latestPreviousTask = await Task.findOne({
+                where: {
+                    due_date: { [Op.lt]: startOfDay }
+                },
+                order: [['due_date', 'DESC']],
+                transaction
+            });
+
+            if(latestPreviousTask){
+                const latestPreviousDate = DateTime.fromJSDate(latestPreviousTask.due_date, {
+                    zone: 'Asia/Ho_Chi_Minh'
+                });
+                const latestStartOfDay = latestPreviousDate.startOf('day').toJSDate();
+                const latestEndOfDay = latestPreviousDate.endOf('day').toJSDate();
+
+                tasksFromPreviousDay = await Task.findAll({
+                    where: {
+                        due_date: {
+                            [Op.between]: [latestStartOfDay, latestEndOfDay]
+                        }
+                    },
+                    include: [{ model: TaskPet, as: 'task' }],
+                    transaction
+                });
+            }
+        }
+
+        if(!tasksFromPreviousDay || tasksFromPreviousDay.length === 0){
+            // Không tìm thấy công việc nào trong lịch sử để lặp lại
             await transaction.commit();
             return { createdTaskCount: 0, createdTaskPetCount: 0, alreadyExistedOrSkippedCount: 0, totalProcessedFromPreviousDay: 0 }
         }
@@ -515,8 +545,14 @@ const rolloverOrRecreateTasksForToday = async(targetDateString) => {
                 zone: 'Asia/Ho_Chi_Minh'
             });
 
-            // ✅ +1 ngày
-            const nextDayHour = hourDate.plus({ days: 1 });
+            // ✅ Map giờ về đúng targetDate (giữ nguyên giờ:phút:giây), vì task mẫu
+            // có thể lấy từ ngày hôm qua hoặc từ ngày gần nhất trước đó có task
+            const nextDayHour = targetDate.startOf('day').set({
+                hour: hourDate.hour,
+                minute: hourDate.minute,
+                second: hourDate.second,
+                millisecond: hourDate.millisecond
+            });
 
             // ✅ due_date cuối ngày VN
             // const dueDate = nextDayHour.endOf('day');

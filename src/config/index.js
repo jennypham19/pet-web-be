@@ -20,7 +20,6 @@ const sequelizeCliConfig = {
     },
     production: {
         // Sequelize CLI trong production sẽ dùng DATABASE_URL
-        // use_env_variable: process.env.DATABASE_URL || 'DATABASE_URL',
         use_env_variable: 'DATABASE_URL',
         dialect: 'postgres',
         dialectOptions: {

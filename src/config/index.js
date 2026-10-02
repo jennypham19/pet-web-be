@@ -42,7 +42,7 @@ const appConfig = {
         secret: process.env.JWT_SECRET,
         refreshSecret: process.env.JWT_REFRESH_SECRET,
         accessExpirationMinutes: parseInt(process.env.JWT_ACCESS_EXPIRATION_MINUTES, 10),
-        refreshExpirationDays: parseInt(process.env.JWT_ACCESS_EXPIRATION_MINUTES, 10),
+        refreshExpirationDays: parseInt(process.env.JWT_REFRESH_EXPIRATION_DAYS, 10),
     },
     corsOriginFe: process.env.CORS_ORIGIN_FE,
     logLevel: process.env.LOG_LEVEL

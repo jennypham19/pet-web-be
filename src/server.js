@@ -17,7 +17,7 @@ const startServer = async () => {
         httpServer = http.createServer(app);
 
         //3. Lắng nghe trên port đã cấu hình
-        httpServer.listen(config.port, () => {
+        httpServer.listen(config.port, '0.0.0.0', () => {
             logger.info(`🚀 Server is listening on port ${config.port} in ${config.env} mode`);
             logger.info(`📄 API Docs available at http://localhost:${config.port}/api-docs`);
         });

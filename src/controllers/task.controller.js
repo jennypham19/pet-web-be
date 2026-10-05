@@ -67,6 +67,15 @@ const getTotalTaskAndStaff = catchAsync(async(req, res) => {
     res.status(StatusCodes.OK).send({ success: true, message: 'Lấy total thành công.', data: total })
 })
 
+// Quản lý xóa ảnh của công việc (kèm lý do) -> đưa task về pending + bắn thông báo cho người chụp
+const deleteTaskImage = catchAsync(async(req, res) => {
+    await taskService.deleteTaskImage(req.params.id, {
+        reason: req.body.reason,
+        deletedBy: req.user.id
+    });
+    res.status(StatusCodes.OK).send({ success: true, message: 'Xóa ảnh công việc thành công' });
+})
+
 // Lấy danh sách hình ảnh công việc
 const getListImages = catchAsync(async(req, res) => {
     const images = await taskService.queryListImages();
@@ -92,5 +101,6 @@ module.exports = {
     deleteTask,
     getTotalTaskAndStaff,
     getListImages,
-    getListImagesByDate
+    getListImagesByDate,
+    deleteTaskImage
 }

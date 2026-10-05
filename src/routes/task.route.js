@@ -66,6 +66,14 @@ router.get(
     taskController.getTotalTaskAndStaff
 )
 
+// Quản lý xóa ảnh của công việc (kèm lý do)
+router.delete(
+    '/task-image-deleted/:id',
+    authorize('mod', 'admin'),
+    validate(taskValidation.deleteTaskImage),
+    taskController.deleteTaskImage
+)
+
 // Lấy danh sách hình ảnh công việc
 router.get(
     '/list-images-task',

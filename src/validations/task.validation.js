@@ -49,10 +49,20 @@ const getListImagesByDate = {
         date: Joi.string().required()
     })
 }
+
+const deleteTaskImage = {
+    params: Joi.object().keys({
+        id: Joi.string().required()
+    }),
+    body: Joi.object().keys({
+        reason: Joi.string().trim().required()
+    })
+}
 module.exports = {
     createTask,
     updateStatus,
     updateImagesForTask,
     queryTasksForSpecialist,
-    getListImagesByDate
+    getListImagesByDate,
+    deleteTaskImage
 }

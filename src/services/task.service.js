@@ -5,6 +5,37 @@ const ApiError = require('../utils/ApiError');
 const { Op } = require('sequelize');
 const { DateTime } = require('luxon');
 const { lock } = require('../routes/task.route');
+const cloudinary = require('../config/cloudinary');
+const logger = require('../config/logger');
+const notificationService = require('./notification.service.js');
+
+// Trích public_id + resource_type từ URL Cloudinary để phục vụ việc xóa ảnh
+const parseCloudinaryUrl = (url) => {
+    try {
+        if (!url) return null;
+        // Xác định resource_type từ path: /image/upload, /video/upload, /raw/upload
+        let resourceType = 'image';
+        const resourceMatch = url.match(/\/(image|video|raw)\/upload\//);
+        if (resourceMatch) {
+            resourceType = resourceMatch[1];
+        }
+        const uploadIndex = url.indexOf('/upload/');
+        if (uploadIndex === -1) return null;
+        let rest = url.substring(uploadIndex + '/upload/'.length);
+        // Bỏ version "v1234567890/" nếu có
+        rest = rest.replace(/^v\d+\//, '');
+        // Bỏ query string nếu có
+        rest = rest.split('?')[0];
+        // Bỏ phần mở rộng file (.jpg, .png...)
+        const lastDot = rest.lastIndexOf('.');
+        if (lastDot !== -1) {
+            rest = rest.substring(0, lastDot);
+        }
+        return { publicId: decodeURIComponent(rest), resourceType };
+    } catch (e) {
+        return null;
+    }
+};
 
 // lấy chi tiết 1 công việc
 const getTaskById = async(id) => {
@@ -817,6 +848,95 @@ const queryListImagesByDate = async(queryOption) => {
         throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Đã có lỗi xảy ra: " + error.message)
     }
 }
+// Quản lý xóa 1 ảnh của công việc:
+// - xóa bản ghi trong CSDL TaskImages + xóa ảnh trên Cloudinary
+// - đưa công việc về trạng thái pending
+// - tạo thông báo + bắn socket cho người chụp ảnh kèm lý do
+const deleteTaskImage = async (imageId, payload) => {
+    const { reason, deletedBy } = payload;
+
+    // Dữ liệu cần dùng để tạo thông báo sau khi commit
+    let notificationData = null;
+    let cloudinaryTarget = null;
+
+    const transaction = await sequelize.transaction();
+    try {
+        const image = await TaskImage.findByPk(imageId, {
+            include: [
+                { model: Task, as: 'imagesTask' },
+                { model: User, as: 'uploadedBy' }
+            ],
+            transaction
+        });
+
+        if (!image) {
+            throw new ApiError(StatusCodes.NOT_FOUND, 'Không tìm thấy ảnh cần xóa.');
+        }
+
+        const task = image.imagesTask;
+        const uploaderId = image.uploaded_by;
+        const imageName = image.name_image;
+        const imageUrl = image.url_image;
+
+        cloudinaryTarget = parseCloudinaryUrl(imageUrl);
+
+        // 1. Xóa bản ghi ảnh trong CSDL
+        await image.destroy({ transaction });
+
+        // 2. Đưa công việc về trạng thái pending
+        if (task) {
+            task.status = 'pending';
+            // Nếu không còn ảnh nào thì đánh dấu công việc chưa cập nhật ảnh
+            const remaining = await TaskImage.count({ where: { task_id: task.id }, transaction });
+            if (remaining === 0) {
+                task.is_updated_image = false;
+            }
+            await task.save({ transaction });
+        }
+
+        // Chuẩn bị dữ liệu thông báo (sẽ tạo sau khi commit thành công)
+        if (uploaderId) {
+            const taskName = task ? task.name : 'công việc';
+            notificationData = {
+                recipientId: uploaderId,
+                senderId: deletedBy || null,
+                taskId: task ? task.id : null,
+                type: 'image_deleted',
+                title: 'Ảnh của bạn đã bị xóa',
+                message: `Quản lý đã xóa ảnh "${imageName}" trong công việc "${taskName}". Công việc đã được chuyển về trạng thái chờ xử lý.`,
+                reason: reason || null,
+                metadata: { imageName, imageUrl, taskName }
+            };
+        }
+
+        await transaction.commit();
+    } catch (error) {
+        await transaction.rollback();
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Đã có lỗi xảy ra khi xóa ảnh: ' + error.message);
+    }
+
+    // 3. Xóa ảnh trên Cloudinary (ngoài transaction — lỗi ở đây chỉ log, không rollback DB)
+    if (cloudinaryTarget && cloudinaryTarget.publicId) {
+        try {
+            await cloudinary.uploader.destroy(cloudinaryTarget.publicId, {
+                resource_type: cloudinaryTarget.resourceType
+            });
+        } catch (cloudErr) {
+            logger.error(`Không thể xóa ảnh trên Cloudinary (publicId: ${cloudinaryTarget.publicId}): ${cloudErr.message}`);
+        }
+    }
+
+    // 4. Tạo thông báo + bắn socket cho người chụp ảnh (sau khi DB đã commit)
+    if (notificationData) {
+        try {
+            await notificationService.createNotification(notificationData);
+        } catch (notifyErr) {
+            logger.error(`Không thể tạo thông báo cho người chụp ảnh: ${notifyErr.message}`);
+        }
+    }
+};
+
 module.exports = {
     createTask,
     queryTasks,
@@ -826,8 +946,9 @@ module.exports = {
     rolloverOrRecreateTasksForToday,
     deleteOldTasks,
     queryTasksForSpecialist,
-    deleteTask, 
+    deleteTask,
     getTotalTaskAndStaff,
     queryListImages,
-    queryListImagesByDate
+    queryListImagesByDate,
+    deleteTaskImage
 }
